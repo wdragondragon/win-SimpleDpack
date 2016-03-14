@@ -1,0 +1,10 @@
+v0.1
+pe
+cipher
+decipher(to asm)
+stolen code(capstone #)
+iat address move
+retsc(time detected)
+compress(lzma #)
+
+x64
