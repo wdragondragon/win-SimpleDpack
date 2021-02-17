@@ -59,7 +59,7 @@ void unpackAll()
 	}
 	
 }
-void fixOrigionIat()
+void fixOrigionIat()  // 因为将iat改为了壳的，所以要还原原来的iat
 {
 	_asm
 	{
@@ -98,7 +98,7 @@ void fixOrigionIat()
 			if((poThunk[j].u1.Ordinal >>31) != 0x1) //不是用序号
 			{
 				pFuncName=(PIMAGE_IMPORT_BY_NAME)(imagebase+poThunk[j].u1.AddressOfData);
-				tName=pFuncName->Name;
+				tName=(LPBYTE)pFuncName->Name;
 				tVa=(DWORD)GetProcAddress(tHomule,(LPCSTR)tName);
 			}
 			else

@@ -1,7 +1,8 @@
 # SimpleDpack
 <p>windows pe packing 
 <p>This is an aplication for packing windows pe image.
-<p>Designed by devseed(also 小木曾雪菜,YuriSizuku)
+<p>Designed by devseed
+
 
 ### usage:
 <p>cmdline or drag the file on simpledpack.exe
@@ -27,3 +28,5 @@
   * lzma compress only code section in win32 exe
   * c++ class to resolve pe(win32 exe),util fuctions
   * relocate the shell codes dll(c) and add in win32 exe
+* v0.1.1 update the tool to vs2019
+

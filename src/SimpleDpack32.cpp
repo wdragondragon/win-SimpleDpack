@@ -67,7 +67,8 @@ DWORD CSimpleDpack32::setShellReloc(LPBYTE pShellBuf, DWORD hShell,DWORD shellBa
 		{
 			if(pSrcRoffset[i].offset==0) continue;
 			trva=pSrcRoffset[i].offset+pSrcReloc->VirtualAddress;
-			//新重定位地址=重定位后地址-加载时的镜像基址+新的镜像基址+代码基址(PE文件镜像大小)
+			// 新重定位地址=重定位后地址-加载时的镜像基址+新的镜像基址+代码基址(PE文件镜像大小)
+			// 将dll shell中的重定位信息加上嵌入exe中的偏移
 			*(PDWORD)((DWORD)pShellBuf+trva)=*(PDWORD)((DWORD)hShell+trva)-hShell
 				+*m_pe32.m_pe32Index.pdwImageBase+shellBaseRva;//重定向每一项地址
 		}
@@ -77,7 +78,7 @@ DWORD CSimpleDpack32::setShellReloc(LPBYTE pShellBuf, DWORD hShell,DWORD shellBa
 	}
 	return all_num;
 }
-DWORD CSimpleDpack32::setShellIat(LPBYTE pShellBuf, DWORD hShell,DWORD shellBaseRva)
+DWORD CSimpleDpack32::setShellIat(LPBYTE pShellBuf, DWORD hShell,DWORD shellBaseRva) // 调整shellcode中的iat
 {
 	DWORD i,j;
 	DWORD dll_num=m_shellpe32.m_pe32Index.pDataDir[IMAGE_DIRECTORY_ENTRY_IMPORT].Size
@@ -194,7 +195,7 @@ DWORD CSimpleDpack32::shelldllProc(int type,char *dllpath)	//处理外壳,若其他操作
 	m_pe32.m_pe32Index.pDataDir[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size=
 		m_shellpe32.m_pe32Index.pDataDir[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size;//reloc
 	m_pe32.m_pe32Index.pDataDir[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress=
-		m_shellpe32.m_pe32Index.pDataDir[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress
+		m_shellpe32.m_pe32Index.pDataDir[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress // 将原来的iat改到壳代码处
 		+*m_pe32.m_pe32Index.pdwImageSize;
 	m_pe32.m_pe32Index.pDataDir[IMAGE_DIRECTORY_ENTRY_IMPORT].Size=
 		m_shellpe32.m_pe32Index.pDataDir[IMAGE_DIRECTORY_ENTRY_IMPORT].Size;//导入表
