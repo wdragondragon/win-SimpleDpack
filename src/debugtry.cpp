@@ -1,7 +1,9 @@
 #include "debugtry.h"
-#include "PeInfo32.hpp"
-#include "SimpleDpack32.hpp"
+#include "PeInfo.hpp"
+#include "SimpleDpack.hpp"
+#include "capstone-3.0.4-win32\capstone.h"
 #include <iostream>
+#ifdef _DEBUGTRY
 using namespace std;
 class A
 {
@@ -123,12 +125,12 @@ int dbg_rvaf()
 {
 	char *path="d:\\1.exe";
 	CPEinfo::isPe("D:\\1.EXE");
-	int c=CPEinfo32::getOepRva("D:\\1.exe");
-	c=CPEinfo32::getFileSize("D:\\1.EXE");
-	c=CPEinfo32::rva2faddr(path,0x136);
-	c=CPEinfo32::faddr2rva(path,0x200000);
-	c=CPEinfo32::va2faddr(path,0x601e00);
-	c=CPEinfo32::faddr2va(path,0x200000);
+	int c=CPEinfo::getOepRva("D:\\1.exe");
+	c=CPEinfo::getFileSize("D:\\1.EXE");
+	c=CPEinfo::rva2faddr(path,0x136);
+	c=CPEinfo::faddr2rva(path,0x200000);
+	c=CPEinfo::va2faddr(path,0x601e00);
+	c=CPEinfo::faddr2va(path,0x200000);
 	int a[42];
 	int const *p=a;
 	//p[2]=3;
@@ -138,23 +140,23 @@ int dbg_overlay()
 {
 	char *path="d:\\overlay.exe";
 	PBYTE buf=new BYTE[0x100000];
-	int c=CPEinfo32::getOverlaySize(path);
-	c=CPEinfo32::readOverlay(path,buf);
+	int c=CPEinfo::getOverlaySize(path);
+	c=CPEinfo::readOverlay(path,buf);
 	delete[] buf;
-	DWORD oldrva=CPEinfo32::setOepRva(path,300);
-	c=CPEinfo32::getOepRva(path);
+	DWORD oldrva=CPEinfo::setOepRva(path,300);
+	c=CPEinfo::getOepRva(path);
 	char *path2="d:\\ooxx.exe";
 	char *str="write in overlay!";
-	CPEinfo32::addOverlay(path2,(LPBYTE)str,strlen(str)+1);
+	CPEinfo::addOverlay(path2,(LPBYTE)str,strlen(str)+1);
 	return 0;
 }
 int dbg_savePe()
 {
 	char *inpath="d:\\ooxx.exe";
 	char *outpath="d:\\ooxx2.exe";
-	CPEinfo32 pe1(inpath,true);
-	CPEinfo32 pe2(pe1);
-	CPEinfo32 pe3;
+	CPEinfo pe1(inpath,true);
+	CPEinfo pe2(pe1);
+	CPEinfo pe3;
 	pe3=pe2;
 	pe3.savePeFile(outpath);
 	return 0;
@@ -163,12 +165,11 @@ int dbg_dpack()
 {
 	char *path="d:\\ooxx.exe";
 	char *path2="d:\\oooxxx.exe";
-	CSimpleDpack32 dpack(path);
+	CSimpleDpack dpack(path);
 	dpack.packPe();
 	dpack.savePe(path2);
 	return 0;
 }
-#ifdef _DEBUGTRY
 int main(int argc,char *argv[])
 {
 	printf("%d %s\n",argc,argv[0]);

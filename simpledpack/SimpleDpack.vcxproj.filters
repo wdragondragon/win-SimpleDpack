@@ -30,24 +30,12 @@
     <ClInclude Include="..\src\PeInfo.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\PeInfo32.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\SimpleDpack.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\SimpleDpack32.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\WinConsole.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\debugtry.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\dllmain.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\dpackCode.c">
@@ -59,13 +47,7 @@
     <ClCompile Include="..\src\PeInfo.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\PeInfo32.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\SimpleDpack.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\SimpleDpack32.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\WinConsole.cpp">

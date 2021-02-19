@@ -1,4 +1,3 @@
-#include "WinConsole.h"
 #ifndef _DBGTRY_H
 #define _DBGTRY_H
 

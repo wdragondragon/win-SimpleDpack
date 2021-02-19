@@ -1,0 +1,142 @@
+#include "simpledpackshell.h"
+void dpackStart();
+extern "C" {
+	DPACK_API DPACK_HDADER g_shellHeader = { (DWORD)dpackStart,0 };//顺便初始化壳oep
+}
+#ifdef _WIN64
+ULONGLONG g_orgOep
+#else
+DWORD g_orgOep;
+#endif
+
+__declspec(naked) void BeforeUnpack()
+{
+
+}
+
+__declspec(naked) void AfterUnpack()
+{
+
+}
+
+#ifdef _WIN32
+__declspec(naked) void JmpOrgOep()
+{
+	__asm
+	{
+		push g_orgOep;
+		ret;
+	}
+}
+#endif
+
+__declspec(naked) void dpackStart()//此函数中不要有局部变量
+{
+
+	BeforeUnpack();
+	MallocAll(NULL);
+	UnpackAll(NULL);
+	g_orgOep = g_shellHeader.OrgIndex.ImageBase + g_shellHeader.OrgIndex.OepRva;
+	LoadOrigionIat(NULL);
+	AfterUnpack();
+	JmpOrgOep();
+}
+
+void MallocAll(PVOID arg)
+{
+
+}
+
+void UnpackAll(PVOID arg)
+{
+	int i;
+	DWORD res;
+	DWORD oldProtect;
+	LPBYTE buf;
+#ifdef _WIN64
+	ULONGLONG imagebase = g_shellHeader.OrgIndex.ImageBase;
+#else
+	DWORD imagebase = g_shellHeader.OrgIndex.ImageBase;
+#endif
+	for(i=0; i<g_shellHeader.SectionNum; i++)
+	{
+		buf = new BYTE[g_shellHeader.SectionIndex[i].OrgRva];
+		res = dlzmaUnpack(buf, (LPBYTE)(g_shellHeader.SectionIndex[i].PackedRva + imagebase),
+			g_shellHeader.SectionIndex[i].PackedSize);
+		if(res==0) 
+		{
+			MessageBox(0,"unpack failed","error",0);
+			ExitProcess(1);
+		}
+		VirtualProtect((LPVOID)(imagebase + g_shellHeader.SectionIndex[i].OrgRva),
+						g_shellHeader.SectionIndex[i].OrgSize,
+						PAGE_EXECUTE_READWRITE ,&oldProtect);
+		memcpy((void *)(imagebase + g_shellHeader.SectionIndex[i].OrgRva),
+				buf,g_shellHeader.SectionIndex[i].OrgSize);
+		VirtualProtect((LPVOID)(imagebase + g_shellHeader.SectionIndex[i].OrgRva),
+			            g_shellHeader.SectionIndex[i].OrgSize,
+			            oldProtect, &oldProtect);
+		delete[] buf;
+	}
+}
+
+void LoadOrigionIat(PVOID arg)  // 因为将iat改为了壳的，所以要还原原来的iat
+{
+	DWORD i,j;
+	DWORD dll_num = g_shellHeader.OrgIndex.ImportSize
+		/sizeof(IMAGE_IMPORT_DESCRIPTOR);//导入dll的个数,含最后全为空的一项
+	DWORD item_num=0;//一个dll中导入函数的个数,不包括全0的项
+	DWORD oldProtect;
+	HMODULE tHomule;//临时加载dll的句柄
+	LPBYTE tName;//临时存放名字
+#ifdef _WIN64
+	ULONGLONG tVa;//临时存放虚拟地址
+	ULONGLONG imagebase = g_shellHeader.OrgIndex.ImageBase;
+#else
+	DWORD tVa;//临时存放虚拟地址
+	DWORD imagebase = g_shellHeader.OrgIndex.ImageBase;
+#endif
+	PIMAGE_IMPORT_DESCRIPTOR pImport=(PIMAGE_IMPORT_DESCRIPTOR)(imagebase+
+		g_shellHeader.OrgIndex.ImportRva);//指向第一个dll
+	PIMAGE_THUNK_DATA pfThunk;//ft
+	PIMAGE_THUNK_DATA poThunk;//oft
+	PIMAGE_IMPORT_BY_NAME pFuncName;
+	for(i=0;i<dll_num;i++)
+	{
+		if(pImport[i].OriginalFirstThunk==0) continue;
+		tName=(LPBYTE)(imagebase+pImport[i].Name);
+		tHomule=LoadLibrary((LPCSTR)tName);
+		pfThunk=(PIMAGE_THUNK_DATA)(imagebase+pImport[i].FirstThunk);
+		poThunk=(PIMAGE_THUNK_DATA)(imagebase+pImport[i].OriginalFirstThunk);
+		for(j=0;poThunk[j].u1.AddressOfData!=0;j++){}//注意个数。。。
+		item_num=j;
+
+		VirtualProtect((LPVOID)(pfThunk),item_num * sizeof(IMAGE_THUNK_DATA),
+						PAGE_EXECUTE_READWRITE,&oldProtect);//注意指针位置
+		for(j=0;j<item_num;j++)
+		{
+			if((poThunk[j].u1.Ordinal >>31) != 0x1) //不是用序号
+			{
+				pFuncName=(PIMAGE_IMPORT_BY_NAME)(imagebase+poThunk[j].u1.AddressOfData);
+				tName=(LPBYTE)pFuncName->Name;
+#ifdef _WIN64
+				tVa = (ULONGLONG)GetProcAddress(tHomule, (LPCSTR)tName);
+#else
+				tVa = (DWORD)GetProcAddress(tHomule, (LPCSTR)tName);
+#endif
+			}
+			else
+			{
+				//如果此参数是一个序数值，它必须在一个字的底字节，高字节必须为0。
+#ifdef _WIN64			
+				tVa = (ULONGLONG)GetProcAddress(tHomule,(LPCSTR)(poThunk[j].u1.Ordinal & 0x0000ffff));
+#else
+				tVa = (DWORD)GetProcAddress(tHomule, (LPCSTR)(poThunk[j].u1.Ordinal & 0x0000ffff));
+#endif
+			}
+			pfThunk[j].u1.Function = tVa;//注意间接寻址
+		}
+		VirtualProtect((LPVOID)(pfThunk),item_num * sizeof(IMAGE_THUNK_DATA),
+				oldProtect,&oldProtect);
+	}
+}

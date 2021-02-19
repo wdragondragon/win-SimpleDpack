@@ -21,7 +21,8 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{10F30780-563C-40EF-AC6C-CC366C7FADEA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>simpledpackshell32</RootNamespace>
+    <RootNamespace>simpledpackshell</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -78,6 +79,7 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin</OutDir>
     <IncludePath>..\externlib\include;$(IncludePath)</IncludePath>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -88,7 +90,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;SIMPLEDPACKSHELL32_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;SIMPLEDPACKSHELL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -123,9 +125,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;SIMPLEDPACKSHELL32_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>NotSet</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
@@ -153,12 +156,12 @@
   <ItemGroup>
     <ClCompile Include="..\src\dllmain.cpp" />
     <ClCompile Include="..\src\dunpackCode.c" />
-    <ClCompile Include="..\src\simpledpackshell32.cpp" />
+    <ClCompile Include="..\src\simpledpackshell.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\dpackType.h" />
     <ClInclude Include="..\src\dunpackCode.h" />
-    <ClInclude Include="..\src\simpledpackshell32.h" />
+    <ClInclude Include="..\src\simpledpackshell.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

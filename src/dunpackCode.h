@@ -6,5 +6,5 @@
 /*
 	dpack decoder
 */
-DWORD dlzmaUnPack(LPBYTE dst,LPBYTE src,DWORD size);
+DWORD dlzmaUnpack(LPBYTE dst,LPBYTE src,DWORD size);
 #endif

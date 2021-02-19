@@ -21,18 +21,18 @@
     <ClCompile Include="..\src\dunpackCode.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\simpledpackshell32.cpp">
+    <ClCompile Include="..\src\simpledpackshell.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\simpledpackshell32.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\dpackType.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\dunpackCode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\simpledpackshell.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

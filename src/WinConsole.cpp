@@ -1,4 +1,4 @@
-#include "WinConsole.h"
+#include "SimpleDpack.hpp"
 #include "debugtry.h"
 #include <iostream>
 #include <fstream>
@@ -10,16 +10,16 @@ using namespace std;
 */
 int main(int argc,char *argv[])
 {
-	cout<<"-----------------SimpleDpack ver0.1.1--------------------"<<endl;
-	cout<<"[1]the initial demo version that can pack the pe32 exe file"<<endl;
+	cout<<"-----------------SimpleDpack ver0.2--------------------"<<endl;
+	cout<<"[1]pack the pe32/pe64 exe file"<<endl;
 	cout<<"   code section by lzma through dll"<<endl;
-	cout<<"[2]new it can only support a little various of exe file,"<<endl;
-	cout<<"   so just be regardless of the compatibility"<<endl;
+	cout<<"[2]new it can pack multi segments,"<<endl;
+	cout<<"   x64 version will come soon" <<endl;
 	cout<<"[3]now Anti-virus software may regard the packed file as an viru"<<endl;
 	cout<<"[4]other functions will be coming soon..."<<endl;
 	cout<<"----useage:cmdline or drag the file on simpledpack.exe"<<endl;
 	cout<<"simpledpack inpath [outpath]"<<endl;
-	cout<<"----coded by devseed"<<endl;
+	cout<<"----designed by devseed"<<endl;
 	cout<<"-------------------------------------------------------"<<endl;
 	if(argc<=1)
 	{
@@ -36,8 +36,12 @@ int main(int argc,char *argv[])
 			cout<<"#error:invalid path!"<<endl;
 			return 1;
 		}
-		CSimpleDpack32 dpack(argv[1]);
-		res=dpack.packPe();
+		CSimpleDpack dpack(argv[1]);
+#ifdef _WIN64
+		res = dpack.packPe("simpledpackshell64.dll");
+#else
+		res = dpack.packPe("simpledpackshell.dll");
+#endif
 		if(res==0)
 		{
 			cout<<"#error:pe pack error!"<<endl;
