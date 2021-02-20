@@ -1,4 +1,4 @@
-#include "PeInfo.hpp"
+#include "PEinfo.hpp"
 #include <fstream>
 using namespace std;
 /*Static*/
@@ -35,11 +35,11 @@ int CPEinfo::isPe(const char* path)
 	return isPe((LPBYTE)buf);
 }
 
-int CPEinfo::isPe(LPBYTE pFileBuf)
+int CPEinfo::isPe(LPBYTE pPeBuf)
 {
-	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)pFileBuf;
+	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)pPeBuf;
 	if(pDosHeader->e_magic!=IMAGE_DOS_SIGNATURE) return -1; //"MZ"
-	PIMAGE_NT_HEADERS32 pNtHeader = getNtHeader(pFileBuf);
+	PIMAGE_NT_HEADERS32 pNtHeader = getNtHeader(pPeBuf);
 	if(pNtHeader->Signature != IMAGE_NT_SIGNATURE) return -2;  //"PE\0\0"
 	return pNtHeader->OptionalHeader.Magic; 
 }
@@ -52,40 +52,40 @@ DWORD CPEinfo::toAlignment(DWORD num,DWORD align)
 	return num;
 }
 
-PIMAGE_NT_HEADERS CPEinfo::getNtHeader(LPBYTE pFileBuf)
+PIMAGE_NT_HEADERS CPEinfo::getNtHeader(LPBYTE pPeBuf)
 {
-	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)pFileBuf;
-	return (PIMAGE_NT_HEADERS32)(pFileBuf + pDosHeader->e_lfanew);
+	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)pPeBuf;
+	return (PIMAGE_NT_HEADERS32)(pPeBuf + pDosHeader->e_lfanew);
 }
 
-PIMAGE_FILE_HEADER CPEinfo::getFileHeader(LPBYTE pFileBuf)
+PIMAGE_FILE_HEADER CPEinfo::getFileHeader(LPBYTE pPeBuf)
 {
-	return &getNtHeader(pFileBuf)->FileHeader;
+	return &getNtHeader(pPeBuf)->FileHeader;
 }
 
-PIMAGE_OPTIONAL_HEADER CPEinfo::getOptionalHeader(LPBYTE pFileBuf)
+PIMAGE_OPTIONAL_HEADER CPEinfo::getOptionalHeader(LPBYTE pPeBuf)
 {
-	return &getNtHeader(pFileBuf)->OptionalHeader;
+	return &getNtHeader(pPeBuf)->OptionalHeader;
 }
 
-PIMAGE_DATA_DIRECTORY CPEinfo::getImageDataDirectory(LPBYTE pFileBuf) 
+PIMAGE_DATA_DIRECTORY CPEinfo::getImageDataDirectory(LPBYTE pPeBuf) 
 {
-	PIMAGE_OPTIONAL_HEADER pOptionalHeader = getOptionalHeader(pFileBuf);
+	PIMAGE_OPTIONAL_HEADER pOptionalHeader = getOptionalHeader(pPeBuf);
 	return pOptionalHeader->DataDirectory;
 }
 
-PIMAGE_SECTION_HEADER CPEinfo::getSectionHeader(LPBYTE pFileBuf)
+PIMAGE_SECTION_HEADER CPEinfo::getSectionHeader(LPBYTE pPeBuf)
 {
-	PIMAGE_NT_HEADERS pNtHeader = getNtHeader(pFileBuf);
+	PIMAGE_NT_HEADERS pNtHeader = getNtHeader(pPeBuf);
 	return (PIMAGE_SECTION_HEADER)((LPBYTE)pNtHeader + sizeof(IMAGE_NT_HEADERS));
 }
 
-PIMAGE_IMPORT_DESCRIPTOR CPEinfo::getImportDescriptor(LPBYTE pFileBuf, bool bMemAlign = true)
+PIMAGE_IMPORT_DESCRIPTOR CPEinfo::getImportDescriptor(LPBYTE pPeBuf, bool bMemAlign = true)
 {
-	PIMAGE_DATA_DIRECTORY pImageDataDirectory = getImageDataDirectory(pFileBuf);
+	PIMAGE_DATA_DIRECTORY pImageDataDirectory = getImageDataDirectory(pPeBuf);
 	DWORD rva =  pImageDataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress;
-	DWORD offset = bMemAlign ?  rva2faddr(pFileBuf, rva) : rva;
-	return (PIMAGE_IMPORT_DESCRIPTOR)(pFileBuf + offset);
+	DWORD offset = bMemAlign ?  rva2faddr(pPeBuf, rva) : rva;
+	return (PIMAGE_IMPORT_DESCRIPTOR)(pPeBuf + offset);
 }
 
 DWORD CPEinfo::getPeMemSize(const char* path)
@@ -95,11 +95,11 @@ DWORD CPEinfo::getPeMemSize(const char* path)
 	return getPeMemSize(buf);
 }
 
-DWORD CPEinfo::getPeMemSize(LPBYTE pFileBuf)
+DWORD CPEinfo::getPeMemSize(LPBYTE pPeBuf)
 {
-	if (pFileBuf == NULL) return 0;
-	if (isPe((LPBYTE)pFileBuf) <= 0) return 0;
-	return getOptionalHeader(pFileBuf)->SizeOfImage;
+	if (pPeBuf == NULL) return 0;
+	if (isPe((LPBYTE)pPeBuf) <= 0) return 0;
+	return getOptionalHeader(pPeBuf)->SizeOfImage;
 }
 
 DWORD CPEinfo::getOverlaySize(const char* path)
@@ -149,17 +149,6 @@ DWORD CPEinfo::readOverlay(LPBYTE pFileBuf, DWORD filesize, LPBYTE pOverlayBuf)
 	return olaysize;
 }
 
-DWORD CPEinfo::addOverlay(const char* path, LPBYTE pOverlay, DWORD size)//¸½¼ÓÊý¾Ý£¬´Ë´¦²»ÔÙ¶ÔÆëÁË
-{
-	if (pOverlay == NULL) return 0;
-	ofstream fout(path, ios::binary | ios::app);
-	if (fout.fail()) return 0;
-	fout.seekp(0, ios::end);
-	fout.write((const char*)pOverlay, size);
-	fout.close();
-	return size;
-}
-
 DWORD CPEinfo::getOepRva(const char* path)
 {
 	BYTE buf[PEHBUF_SIZE];//ÅÐ¶ÏpeÖ»¶ÁÈ¡Ç°0x100×Ö½Ú¾ÍÐÐ
@@ -167,35 +156,11 @@ DWORD CPEinfo::getOepRva(const char* path)
 	return getOepRva(buf);
 }
 
-DWORD CPEinfo::getOepRva(LPBYTE pFileBuf)
+DWORD CPEinfo::getOepRva(LPBYTE pPeBuf)
 {
-	if (pFileBuf == NULL) return 0;
-	if (isPe(pFileBuf) <= 0) return 0;
-	return getOptionalHeader(pFileBuf)->AddressOfEntryPoint;
-}
-
-DWORD CPEinfo::setOepRva(const char* path, DWORD rva)
-{
-	BYTE buf[PEHBUF_SIZE];
-	int readsize = readFile(path, buf, PEHBUF_SIZE);
-	if (readsize == 0) return 0;
-	DWORD oldrva = setOepRva((LPBYTE)buf, rva);
-	if (oldrva == 0) return 0;
-	ofstream fout(path, ios::binary | ios::ate | ios::in);//ios::outÔòÇå¿ÕÎÄ¼þ£¬ios::appÃ¿´ÎÐ´¶¼ÊÇÔÚ×îºó£¬ios::ate¿ÉÒÔÓÃseekp
-	fout.seekp(0, ios::beg);
-	fout.write((const char*)buf, readsize);
-	fout.close();
-	return oldrva;
-}
-
-DWORD CPEinfo::setOepRva(LPBYTE pFileBuf, DWORD rva)//·µ»ØÔ­À´µÄrva
-{
-	if (pFileBuf == NULL) return 0;
-	if (isPe(pFileBuf) <= 0) return 0;
-	DWORD* pRva = &getOptionalHeader(pFileBuf)->AddressOfEntryPoint;
-	DWORD oldrva = *pRva;
-	*pRva = rva;
-	return oldrva;
+	if (pPeBuf == NULL) return 0;
+	if (isPe(pPeBuf) <= 0) return 0;
+	return getOptionalHeader(pPeBuf)->AddressOfEntryPoint;
 }
 
 DWORD CPEinfo::rva2faddr(const char* path, DWORD rva)
@@ -206,15 +171,15 @@ DWORD CPEinfo::rva2faddr(const char* path, DWORD rva)
 	return rva2faddr(buf, rva);
 }
 
-DWORD CPEinfo::rva2faddr(LPBYTE pFileBuf, DWORD rva)
+DWORD CPEinfo::rva2faddr(LPBYTE pPeBuf, DWORD rva)
 {
-	if (pFileBuf == NULL) return 0;
-	if (isPe(pFileBuf) <= 0) return 0;
-	PIMAGE_OPTIONAL_HEADER pOptionalHeader = getOptionalHeader(pFileBuf);
+	if (pPeBuf == NULL) return 0;
+	if (isPe(pPeBuf) <= 0) return 0;
+	PIMAGE_OPTIONAL_HEADER pOptionalHeader = getOptionalHeader(pPeBuf);
 	if (rva <= pOptionalHeader -> SectionAlignment) return rva;//peÍ·²¿·Ö
 	DWORD rvaoff;//rvaÏà¶Ô¹ÒÔØµãÆ«ÒÆ
-	PIMAGE_SECTION_HEADER pSecHeader = getSectionHeader(pFileBuf);
-	WORD sec_num = getFileHeader(pFileBuf) -> NumberOfSections;
+	PIMAGE_SECTION_HEADER pSecHeader = getSectionHeader(pPeBuf);
+	WORD sec_num = getFileHeader(pPeBuf) -> NumberOfSections;
 	for (int i = 0; i < sec_num; i++)
 	{
 		rvaoff = rva - pSecHeader[i].VirtualAddress;
@@ -233,15 +198,15 @@ DWORD CPEinfo::faddr2rva(const char* path, DWORD faddr)
 	return faddr2rva(buf, faddr);
 }
 
-DWORD CPEinfo::faddr2rva(LPBYTE pFileBuf, DWORD faddr)
+DWORD CPEinfo::faddr2rva(LPBYTE pPeBuf, DWORD faddr)
 {
-	if (pFileBuf == NULL) return 0;
-	if (isPe(pFileBuf) <= 0) return 0;
-	PIMAGE_OPTIONAL_HEADER pOptionalHeader = getOptionalHeader(pFileBuf);
+	if (pPeBuf == NULL) return 0;
+	if (isPe(pPeBuf) <= 0) return 0;
+	PIMAGE_OPTIONAL_HEADER pOptionalHeader = getOptionalHeader(pPeBuf);
 	if (faddr <= pOptionalHeader -> FileAlignment) return faddr;
 	DWORD faddroff;//faddrÏà¶Ô¹ÒÔØµãÆ«ÒÆ
-	PIMAGE_SECTION_HEADER pSecHeader = getSectionHeader(pFileBuf);
-	WORD sec_num = getFileHeader(pFileBuf)->NumberOfSections;
+	PIMAGE_SECTION_HEADER pSecHeader = getSectionHeader(pPeBuf);
+	WORD sec_num = getFileHeader(pPeBuf)->NumberOfSections;
 	for (int i = 0; i < sec_num; i++)
 	{
 		faddroff = faddr - pSecHeader[i].PointerToRawData;
@@ -265,14 +230,14 @@ DWORD CPEinfo::va2rva(const char* path, DWORD va)
 }
 
 #ifdef _WIN64
-DWORD CPEinfo::va2rva(LPBYTE pFileBuf, ULONGLONG va)
+DWORD CPEinfo::va2rva(LPBYTE pPeBuf, ULONGLONG va)
 #else
-DWORD CPEinfo::va2rva(LPBYTE pFileBuf, DWORD va)
+DWORD CPEinfo::va2rva(LPBYTE pPeBuf, DWORD va)
 #endif
 {
-	if (pFileBuf == NULL) return 0;
-	if (isPe(pFileBuf) <= 0) return 0; 
-	return va - getOptionalHeader(pFileBuf)->ImageBase;
+	if (pPeBuf == NULL) return 0;
+	if (isPe(pPeBuf) <= 0) return 0; 
+	return va - getOptionalHeader(pPeBuf)->ImageBase;
 }
 
 #ifdef _WIN64
@@ -287,14 +252,14 @@ DWORD CPEinfo::rva2va(const char* path, DWORD rva)
 }
 
 #ifdef _WIN64
-ULONGLONG CPEinfo::rva2va(LPBYTE pFileBuf, DWORD rva)
+ULONGLONG CPEinfo::rva2va(LPBYTE pPeBuf, DWORD rva)
 #else
-DWORD CPEinfo::rva2va(LPBYTE pFileBuf, DWORD rva)
+DWORD CPEinfo::rva2va(LPBYTE pPeBuf, DWORD rva)
 #endif
 {
-	if (pFileBuf == NULL) return 0;
-	if (isPe(pFileBuf) <= 0) return 0;
-	return rva + getOptionalHeader(pFileBuf)->ImageBase;
+	if (pPeBuf == NULL) return 0;
+	if (isPe(pPeBuf) <= 0) return 0;
+	return rva + getOptionalHeader(pPeBuf)->ImageBase;
 }
 
 #ifdef _WIN64
@@ -309,13 +274,13 @@ DWORD CPEinfo::faddr2va(const char* path, DWORD faddr)
 }
 
 #ifdef _WIN64
-ULONGLONG CPEinfo::faddr2va(LPBYTE pFileBuf, DWORD faddr)
+ULONGLONG CPEinfo::faddr2va(LPBYTE pPeBuf, DWORD faddr)
 #else
-DWORD CPEinfo::faddr2va(LPBYTE pFileBuf, DWORD faddr)
+DWORD CPEinfo::faddr2va(LPBYTE pPeBuf, DWORD faddr)
 #endif
 {
-	if (pFileBuf == NULL) return 0;
-	return rva2va(pFileBuf, faddr2rva(pFileBuf, faddr));
+	if (pPeBuf == NULL) return 0;
+	return rva2va(pPeBuf, faddr2rva(pPeBuf, faddr));
 }
 
 #ifdef _WIN64
@@ -329,36 +294,36 @@ DWORD CPEinfo::va2faddr(const char* path, DWORD va)
 	return va2faddr(buf, va);
 }
 #ifdef _WIN64
-DWORD CPEinfo::va2faddr(LPBYTE pFileBuf, ULONGLONG va)
+DWORD CPEinfo::va2faddr(LPBYTE pPeBuf, ULONGLONG va)
 #else
-DWORD CPEinfo::va2faddr(LPBYTE pFileBuf, DWORD va)
+DWORD CPEinfo::va2faddr(LPBYTE pPeBuf, DWORD va)
 #endif
 {
-	if (pFileBuf == NULL) return 0;
-	return rva2faddr(pFileBuf, va2rva(pFileBuf, va));
+	if (pPeBuf == NULL) return 0;
+	return rva2faddr(pPeBuf, va2rva(pPeBuf, va));
 }
 
 DWORD CPEinfo::loadPeFile(const char* path,
-	LPBYTE pFileBuf, DWORD* FileBufSize,
+	LPBYTE pPeBuf, DWORD* FileBufSize,
 	bool bMemAlign,
 	LPBYTE pOverlayBuf, DWORD* OverlayBufSize)//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»Ø¶ÁÈ¡×Ü×Ö½ÚÊý,FileBufSize=0×Ô¶¯È·ÈÏ
 {
-	if (pFileBuf == NULL) return 0;
+	if (pPeBuf == NULL) return 0;
 	DWORD loadsize = 0;
 	DWORD filesize = getFileSize(path);;
 	LPBYTE buf = new BYTE[filesize];
 	if (readFile(path, buf, 0) <= 0) return 0;
 	if (isPe(buf) > 0)
 	{
-		PIMAGE_NT_HEADERS pNtHeader = getNtHeader(pFileBuf);
-		PIMAGE_SECTION_HEADER pSecHeader = getSectionHeader(pFileBuf);
+		PIMAGE_NT_HEADERS pNtHeader = getNtHeader(pPeBuf);
+		PIMAGE_SECTION_HEADER pSecHeader = getSectionHeader(pPeBuf);
 		DWORD memsize = pNtHeader->OptionalHeader.SizeOfImage;
 		WORD sec_num = pNtHeader->FileHeader.NumberOfSections;
 		//Ò»¶¨Çø¶ÎË÷ÒýµØÖ·°´ÕÕ´ÓÐ¡µ½´óË³Ðò£¬rva£¬faddr¶¼ÊÇ
 		DWORD last_faddr = pSecHeader[sec_num - 1].PointerToRawData + pSecHeader[sec_num - 1].SizeOfRawData;
 		if (bMemAlign == false)
 		{
-			memcpy(pFileBuf, buf, filesize);
+			memcpy(pPeBuf, buf, filesize);
 			if (FileBufSize != NULL) *FileBufSize = filesize;
 			if (last_faddr < filesize)
 			{
@@ -369,12 +334,12 @@ DWORD CPEinfo::loadPeFile(const char* path,
 		}
 		else
 		{
-			memset(pFileBuf, 0, memsize);
+			memset(pPeBuf, 0, memsize);
 			loadsize = memsize;
-			memcpy(pFileBuf, buf, pNtHeader->OptionalHeader.SizeOfHeaders);//PEÇø¶Î
+			memcpy(pPeBuf, buf, pNtHeader->OptionalHeader.SizeOfHeaders);//PEÇø¶Î
 			for (int i = 0; i < sec_num; i++)//¸³Öµ
 			{
-				memcpy(pFileBuf + pSecHeader[i].VirtualAddress,
+				memcpy(pPeBuf + pSecHeader[i].VirtualAddress,
 					buf + pSecHeader[i].PointerToRawData,
 					pSecHeader[i].SizeOfRawData);
 			}
@@ -391,21 +356,21 @@ DWORD CPEinfo::loadPeFile(const char* path,
 }
 
 DWORD CPEinfo::savePeFile(const char* path,
-	LPBYTE pFileBuf, DWORD FileBufSize,
+	LPBYTE pPeBuf, DWORD FileBufSize,
 	bool isMemAlign,
 	LPBYTE pOverlayBuf, DWORD OverlayBufSize)//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØÐ´Èë×Ü×Ö½ÚÊý
 {
-	if (pFileBuf == NULL) return 0;
+	if (pPeBuf == NULL) return 0;
 	fstream fout;
 	DWORD writesize = 0;
 	fout.open(path, ios::in);//ÅÐ¶ÏÎÄ¼þÊÇ·ñ´æÔÚ
 	if (!fout.fail()) return 0;
 	fout.close();
 	fout.open(path, ios::out | ios::binary);
-	if (isPe((LPBYTE)pFileBuf)<0) return 0;
+	if (isPe((LPBYTE)pPeBuf)<0) return 0;
 	if (isMemAlign == false)
 	{
-		fout.write((const char*)pFileBuf, FileBufSize);
+		fout.write((const char*)pPeBuf, FileBufSize);
 		writesize = FileBufSize;
 	}
 	else
@@ -417,12 +382,12 @@ DWORD CPEinfo::savePeFile(const char* path,
 		DWORD sectsize;
 
 		writesize = 0;
-		PIMAGE_FILE_HEADER pFileHeader = getFileHeader(pFileBuf);
-		PIMAGE_OPTIONAL_HEADER pOptionalHeader = getOptionalHeader(pFileBuf);
-		PIMAGE_SECTION_HEADER pSecHeader = getSectionHeader(pFileBuf);
+		PIMAGE_FILE_HEADER pFileHeader = getFileHeader(pPeBuf);
+		PIMAGE_OPTIONAL_HEADER pOptionalHeader = getOptionalHeader(pPeBuf);
+		PIMAGE_SECTION_HEADER pSecHeader = getSectionHeader(pPeBuf);
 		WORD sec_num = pFileHeader -> NumberOfSections;
 		last_peaddr = pSecHeader[sec_num - 1].PointerToRawData + pSecHeader[sec_num - 1].SizeOfRawData;
-		fout.write((const char*)pFileBuf, pOptionalHeader -> SizeOfHeaders);//±£´æpeÇø
+		fout.write((const char*)pPeBuf, pOptionalHeader -> SizeOfHeaders);//±£´æpeÇø
 		writesize += pOptionalHeader->SizeOfHeaders;
 		for (int i = 0; i < sec_num; i++)
 		{
@@ -438,7 +403,7 @@ DWORD CPEinfo::savePeFile(const char* path,
 			{
 				for (int j = faddr; j < pSecHeader[i].PointerToRawData; j++) fout.put(0);
 			}
-			fout.write((const char*)(pFileBuf + sectrva), sectsize);
+			fout.write((const char*)(pPeBuf + sectrva), sectsize);
 			writesize += sectsize;
 		}
 	}
@@ -460,14 +425,14 @@ CPEinfo::CPEinfo(const char* path, bool isMemAlign)
 	openPeFile(path, isMemAlign);
 }
 
-CPEinfo::CPEinfo(LPBYTE pFileBuf, DWORD filesize, bool isCopyMem, bool isMemAlign)
+CPEinfo::CPEinfo(LPBYTE pPeBuf, DWORD filesize, bool isCopyMem, bool isMemAlign)
 {
 	CPEinfo();
-	attachPeBuf(pFileBuf, filesize, isCopyMem, isMemAlign);
+	attachPeBuf(pPeBuf, filesize, isCopyMem, isMemAlign);
 }
 void CPEinfo::copy(const CPEinfo& pe, bool isCopyMem)//Ä¬ÈÏ¿½±´º¯Êý
 {
-	attachPeBuf(pe.getFileBuf(), pe.getFileBufSize(),
+	attachPeBuf(pe.getPeBuf(), pe.getPeBufSize(),
 		isCopyMem, pe.isMemAlign(),
 		pe.getOverlayBuf(), pe.getOverlayBufSize());
 	strcpy(this->m_szFilePath, pe.m_szFilePath);
@@ -477,9 +442,9 @@ CPEinfo::CPEinfo(const CPEinfo &pe)
 	copy(pe, true);
 }
 
-CPEinfo& CPEinfo::operator=(CPEinfo& pe32)
+CPEinfo& CPEinfo::operator=(CPEinfo& pe)
 {
-	copy(pe32, true);
+	copy(pe, true);
 	return *this;
 }
 /* constructors end*/
@@ -491,7 +456,7 @@ void CPEinfo::iniValue()
 	m_bMemAlloc = true;//ÊÇ·ñÄÚ´æÎª´Ë´¦·ÖÅäµÄ
 		
 	memset(m_szFilePath,0,MAX_PATH);
-	m_pFileBuf=0;		//PEÎÄ¼þ»º³åÇø
+	m_pPeBuf=0;		//PEÎÄ¼þ»º³åÇø
 	m_dwFileBufSize=0;	//PEÎÄ¼þ»º´æÇø´óÐ¡
 	m_pOverlayBuf=NULL;	//PE¸½¼ÓÊý¾Ý
 	m_dwOverlayBufSize=0; //PE¸½¼ÓÊý¾Ý´óÐ¡
@@ -502,6 +467,7 @@ DWORD CPEinfo::openPeFile(const char* path, bool bMemAlign)//ÔÝÊ±²»ÓÃÄÚ´æÓ³Éä£¬²
 	//ÊÍ·ÅÖ®Ç°×ÊÔ´
 	closePeFile();
 	m_bMemAlign = bMemAlign;
+	m_bMemAlloc = true;
 
 	DWORD filesize = getFileSize(path);
 	DWORD loadsize = 0;
@@ -519,7 +485,7 @@ DWORD CPEinfo::openPeFile(const char* path, bool bMemAlign)//ÔÝÊ±²»ÓÃÄÚ´æÓ³Éä£¬²
 		last_faddr = pSecHeader[sec_num - 1].PointerToRawData + pSecHeader[sec_num - 1].SizeOfRawData;
 		if (bMemAlign == false)
 		{
-			m_pFileBuf = pFileBuf;
+			m_pPeBuf = pFileBuf;
 			m_dwFileBufSize = last_faddr;
 			m_dwOverlayBufSize = filesize - last_faddr;
 			if (last_faddr < filesize)
@@ -533,12 +499,12 @@ DWORD CPEinfo::openPeFile(const char* path, bool bMemAlign)//ÔÝÊ±²»ÓÃÄÚ´æÓ³Éä£¬²
 		{
 			loadsize = memsize;
 			m_dwFileBufSize = memsize;
-			m_pFileBuf = new BYTE[memsize];
-			memset(m_pFileBuf, 0, memsize);
-			memcpy(m_pFileBuf, pFileBuf, pNtHeader->OptionalHeader.SizeOfHeaders);
+			m_pPeBuf = new BYTE[memsize];
+			memset(m_pPeBuf, 0, memsize);
+			memcpy(m_pPeBuf, pFileBuf, pNtHeader->OptionalHeader.SizeOfHeaders);
 			for (WORD i = 0; i < sec_num; i++)//¸³Öµ
 			{
-				memcpy(m_pFileBuf + pSecHeader[i].VirtualAddress,
+				memcpy(m_pPeBuf + pSecHeader[i].VirtualAddress,
 					pFileBuf + pSecHeader[i].PointerToRawData,
 					pSecHeader[i].SizeOfRawData);
 
@@ -556,27 +522,30 @@ DWORD CPEinfo::openPeFile(const char* path, bool bMemAlign)//ÔÝÊ±²»ÓÃÄÚ´æÓ³Éä£¬²
 	return loadsize;
 }
 
-int CPEinfo::attachPeBuf(LPBYTE pFileBuf,DWORD dwFileBufSize,
+int CPEinfo::attachPeBuf(LPBYTE pPeBuf,DWORD dwFileBufSize,
 						bool bCopyMem, bool bMemAlign,
 						LPBYTE pOverlayBuf, DWORD dwOverLayBufSize)
 {
-	if(pFileBuf==NULL) return 0;
+	if(pPeBuf==NULL) return 0;
 	m_bMemAlloc= bCopyMem;
 	m_bMemAlign= bMemAlign;
 	closePeFile();
-	int res=isPe((LPBYTE)pFileBuf);
+	int res=isPe((LPBYTE)pPeBuf);
 	if(res>0)
 	{
 		if(bCopyMem)
 		{
-			m_pFileBuf=new BYTE[dwFileBufSize];
-			m_pOverlayBuf=new BYTE[dwOverLayBufSize];
-			memcpy(m_pFileBuf,pFileBuf,dwFileBufSize);
-			if(pOverlayBuf!=NULL) memcpy(m_pOverlayBuf,pOverlayBuf,dwOverLayBufSize);
+			m_pPeBuf = new BYTE[dwFileBufSize];
+			memcpy(m_pPeBuf,pPeBuf,dwFileBufSize);
+			if (dwOverLayBufSize > 0)
+			{
+				m_pOverlayBuf = new BYTE[dwOverLayBufSize];
+				memcpy(m_pOverlayBuf, pOverlayBuf, dwOverLayBufSize);
+			}
 		}
 		else
 		{
-			m_pFileBuf = pFileBuf;
+			m_pPeBuf = pPeBuf;
 			m_pOverlayBuf = pOverlayBuf;
 		}
 		m_dwFileBufSize = dwFileBufSize;
@@ -587,10 +556,10 @@ int CPEinfo::attachPeBuf(LPBYTE pFileBuf,DWORD dwFileBufSize,
 
 void CPEinfo::closePeFile()								
 {
-	if(m_szFilePath[0]!=0) memset(m_szFilePath,0,MAX_PATH);
-	if (m_bMemAlloc == true && m_pFileBuf != NULL) delete[] m_pFileBuf;
+	memset(m_szFilePath,0,MAX_PATH);
+	if (m_bMemAlloc == true && m_pPeBuf != NULL) delete[] m_pPeBuf;
 	if (m_bMemAlloc == true && m_pOverlayBuf != NULL) delete[] m_pOverlayBuf;
-	m_pFileBuf = NULL;
+	m_pPeBuf = NULL;
 	m_dwFileBufSize = 0;
 	m_pOverlayBuf = NULL;
 	m_dwOverlayBufSize = 0;
@@ -598,74 +567,70 @@ void CPEinfo::closePeFile()
 
 DWORD CPEinfo::savePeFile(const char* path)
 {
-	return savePeFile(path, m_pFileBuf, m_dwFileBufSize,
+	return savePeFile(path, m_pPeBuf, m_dwFileBufSize,
 		m_bMemAlign,
 		m_pOverlayBuf, m_dwOverlayBufSize);
 }
 
 int CPEinfo::isPe()
 {
-	return CPEinfo::isPe(m_pFileBuf);
+	return CPEinfo::isPe(m_pPeBuf);
 }
 
 DWORD CPEinfo::getOepRva()
 {
-	return getOepRva(m_pFileBuf);
-}
-DWORD CPEinfo::setOepRva(DWORD rva)
-{
-	return setOepRva(m_pFileBuf, rva);
+	return getOepRva(m_pPeBuf);
 }
 
 DWORD CPEinfo::rva2faddr(DWORD rva) const
 {
-	return rva2faddr(m_pFileBuf, rva);
+	return rva2faddr(m_pPeBuf, rva);
 }
 
 DWORD CPEinfo::faddr2rva(DWORD faddr) const
 {
-	return faddr2rva(m_pFileBuf, faddr);
+	return faddr2rva(m_pPeBuf, faddr);
 
 }
 #ifdef _WIN64
 DWORD CPEinfo::va2rva(ULONGLONG va) const
 {
-	return va2rva(m_pFileBuf, va);
+	return va2rva(m_pPeBuf, va);
 }
 
 ULONGLONG CPEinfo::rva2va(DWORD rva) const
 {
-	return rva2va(m_pFileBuf, rva);
+	return rva2va(m_pPeBuf, rva);
 }
 
 ULONGLONG CPEinfo::faddr2va(faddr) const
 {
-	return faddr2va(m_pFileBuf, faddr);
+	return faddr2va(m_pPeBuf, faddr);
 }
 
 DWORD CPEinfo::va2faddr(ULONGLONG va) const
 {
-	return va2faddr(m_pFileBuf, va);
+	return va2faddr(m_pPeBuf, va);
 }
 #else
 DWORD CPEinfo::va2rva(DWORD va) const
 {
-	return va2rva(m_pFileBuf, va);
+	return va2rva(m_pPeBuf, va);
 }
 
 DWORD CPEinfo::rva2va(DWORD rva) const
 {
-	return rva2va(m_pFileBuf, rva);
+	return rva2va(m_pPeBuf, rva);
 }
 
 DWORD CPEinfo::faddr2va(DWORD faddr) const
 {
-	return faddr2va(m_pFileBuf, faddr);
+	return faddr2va(m_pPeBuf, faddr);
 }
 
 DWORD CPEinfo::va2faddr(DWORD va) const
 {
-	return va2faddr(m_pFileBuf, va);
+	return va2faddr(m_pPeBuf, va);
 }
 #endif
 
@@ -684,12 +649,12 @@ const char* const CPEinfo::getFilePath() const
 	return m_szFilePath;
 }
 
-LPBYTE CPEinfo::getFileBuf() const
+LPBYTE CPEinfo::getPeBuf() const
 {
-	return m_pFileBuf;//PEÎÄ¼þ»º³åÇø
+	return m_pPeBuf;//PEÎÄ¼þ»º³åÇø
 }
 
-DWORD CPEinfo::getFileBufSize() const
+DWORD CPEinfo::getPeBufSize() const
 {
 	return m_dwFileBufSize;//PEÎÄ¼þ»º´æÇø´óÐ¡
 }
@@ -706,26 +671,26 @@ DWORD CPEinfo::getOverlayBufSize() const
 
 PIMAGE_NT_HEADERS CPEinfo::getNtHeader()
 {
-	return getNtHeader(m_pFileBuf);
+	return getNtHeader(m_pPeBuf);
 }
 PIMAGE_FILE_HEADER CPEinfo::getFileHeader()
 {
-	return getFileHeader(m_pFileBuf);
+	return getFileHeader(m_pPeBuf);
 }
 PIMAGE_OPTIONAL_HEADER CPEinfo::getOptionalHeader()
 {
-	return getOptionalHeader(m_pFileBuf);
+	return getOptionalHeader(m_pPeBuf);
 }
 PIMAGE_DATA_DIRECTORY CPEinfo::getImageDataDirectory()
 {
-	return getImageDataDirectory(m_pFileBuf);
+	return getImageDataDirectory(m_pPeBuf);
 }
 PIMAGE_SECTION_HEADER CPEinfo::getSectionHeader()
 {
-	return getSectionHeader(m_pFileBuf);
+	return getSectionHeader(m_pPeBuf);
 }
 PIMAGE_IMPORT_DESCRIPTOR CPEinfo::getImportDescriptor()
 {
-	return getImportDescriptor(m_pFileBuf, m_bMemAlign);
+	return getImportDescriptor(m_pPeBuf, m_bMemAlign);
 }
 /*public functions end*/

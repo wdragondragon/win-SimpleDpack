@@ -29,11 +29,13 @@ void CSimpleDpack::iniValue()
 	m_gShellHeader = NULL;
 	m_dpackSectNum = 0;
 }
+
 CSimpleDpack::CSimpleDpack(char* path)
 {
 	iniValue();
 	loadPeFile(path);
 }
+
 void CSimpleDpack::release()
 {
 	iniDpackIndex();
@@ -43,7 +45,6 @@ void CSimpleDpack::release()
 }
 /*Constructor end*/
 
-
 /*private functions*/
 WORD CSimpleDpack::iniDpackIndex()
 {
@@ -51,92 +52,32 @@ WORD CSimpleDpack::iniDpackIndex()
 	if (m_dpackSectNum != 0)
 	{
 		for (int i = 0; i < m_dpackSectNum; i++)
-			if (m_dpackIndex[i].packBuf != NULL && m_dpackIndex[i].packBufSize != 0)
-				delete[] m_dpackIndex[i].packBuf;
+			if (m_dpackIndex[i].PackedBuf != NULL && m_dpackIndex[i].PackedSize != 0)
+				delete[] m_dpackIndex[i].PackedBuf;
 	}
 	m_dpackSectNum = 0;
 	memset(m_dpackIndex, 0, sizeof(m_dpackIndex));
 	return oldDpackSectNum;
 }
 
-WORD CSimpleDpack::addDpackIndex(LPBYTE packBuf, DWORD packBufSize, DWORD srcRva, DWORD srcMemSize)
+WORD CSimpleDpack::addDpackIndex(LPBYTE PackedBuf, DWORD PackedSize, DWORD OrgRva, DWORD OrgMemSize)
 {
-	m_dpackIndex[m_dpackSectNum].packBuf = packBuf;
-	m_dpackIndex[m_dpackSectNum].packBufSize = packBufSize;
-	m_dpackIndex[m_dpackSectNum].srcRva = srcRva;
-	m_dpackIndex[m_dpackSectNum].srcMemSize = srcMemSize;
+	m_dpackIndex[m_dpackSectNum].PackedBuf = PackedBuf;
+	m_dpackIndex[m_dpackSectNum].PackedSize = PackedSize;
+	m_dpackIndex[m_dpackSectNum].OrgRva = OrgRva;
+	m_dpackIndex[m_dpackSectNum].OrgMemSize = OrgMemSize;
 	m_dpackSectNum++;
 	return m_dpackSectNum;
 }
 
-DWORD CSimpleDpack::adjustShellReloc(LPBYTE pShellBuf, HMODULE hShell, DWORD shellBaseRva)//ÉèÖÃdllÖØ¶¨Î»ÐÅÏ¢£¬·µ»Ø¸öÊý
+DWORD CSimpleDpack::adjustShellReloc(DWORD shellBaseRva)//ÉèÖÃdllÖØ¶¨Î»ÐÅÏ¢£¬·µ»Ø¸öÊý
 {
-	//ÐÞ¸´ÖØ¶¨Î»,ÆäÊµ´Ë´¦pShellBufÎªhShell¸±±¾
-	DWORD all_num = 0;
-	DWORD sumsize = 0;
-	DWORD trva = m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress;;
-	LPBYTE pSrcRbuf = (LPBYTE)hShell + trva;
-	LPBYTE pDstRbuf = (LPBYTE)pShellBuf + trva;
-	DWORD relocsize = m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size;
-
-	while (sumsize < relocsize)
-	{
-		auto pSrcReloc = (PIMAGE_BASE_RELOCATION)(pSrcRbuf + sumsize);
-		auto pSrcRoffset = (PRELOCOFFSET)((DWORD)pSrcReloc + sizeof(IMAGE_BASE_RELOCATION));
-		auto pDstReloc = (PIMAGE_BASE_RELOCATION)(pDstRbuf + sumsize);
-		DWORD item_num = (pSrcReloc->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
-		sumsize += sizeof(IMAGE_BASE_RELOCATION);
-		for (int i=0;i<item_num;i++)
-		{
-			if (pSrcRoffset[i].offset == 0) continue;
-			trva = pSrcRoffset[i].offset + pSrcReloc->VirtualAddress;
-
-// ÐÂµÄÖØ¶¨Î»µØÖ· = ÖØ¶¨Î»ºóµÄµØÖ·(VA)-¼ÓÔØÊ±µÄ¾µÏñ»ùÖ·(hModule VA) + ÐÂµÄ¾µÏñ»ùÖ·(VA) + ÐÂ´úÂë»ùÖ·RVA£¨Ç°ÃæÓÃÓÚ´æ·ÅÑ¹ËõµÄ´úÂë£©
-// ½«dll shellÖÐµÄÖØ¶¨Î»ÐÅÏ¢¼ÓÉÏÇ¶ÈëexeÖÐµÄÆ«ÒÆ
-#ifdef _WIN64
-			*(PULONGLONG)(pShellBuf + trva) = *(PULONGLONG)((LPBYTE)hShell + trva) - (ULONGLONG)hShell
-				+ m_exepe.getOptionalHeader()->ImageBase + shellBaseRva;//ÖØ¶¨ÏòÃ¿Ò»ÏîµØÖ·
-#else
-			*(PDWORD)(pShellBuf + trva) = *(PDWORD)((LPBYTE)hShell + trva) - (DWORD)hShell
-				        + m_exepe.getOptionalHeader()->ImageBase + shellBaseRva;//ÖØ¶¨ÏòÃ¿Ò»ÏîµØÖ·
-#endif
-		}
-		pDstReloc->VirtualAddress += shellBaseRva; //ÖØ¶¨ÏòÒ³±í»ùÖ·
-		sumsize += sizeof(WORD) * item_num;
-		all_num += item_num;
-	}
-	return all_num;
+	return m_shellpe.shiftReloc((ULONGLONG)m_hShell, m_exepe.getOptionalHeader()->ImageBase, shellBaseRva);
 }
-DWORD CSimpleDpack::adjustShellIat(LPBYTE pShellBuf, HMODULE hShell, DWORD shellBaseRva) // µ÷ÕûshellcodeÖÐµÄiat
+
+DWORD CSimpleDpack::adjustShellIat(DWORD shellBaseRva) // µ÷ÕûshellcodeÖÐµÄiat
 {
-	auto pImportEntry = &m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT];
-	DWORD dll_num = pImportEntry->Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);//µ¼ÈëdllµÄ¸öÊý,º¬×îºóÈ«Îª¿ÕµÄÒ»Ïî
-	DWORD func_num = 0;//ËùÓÐµ¼Èëº¯Êý¸öÊý£¬²»°üÀ¨È«0µÄÏî
-	auto pImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)
-		(pShellBuf + pImportEntry->VirtualAddress);//Ö¸ÏòµÚÒ»¸ödll
-	for (int i = 0; i < dll_num; i++)
-	{
-		if (pImportDescriptor[i].OriginalFirstThunk == 0) continue;
-		auto pThunk = (PIMAGE_THUNK_DATA)(pShellBuf + pImportDescriptor[i].OriginalFirstThunk);
-		DWORD item_num = 0;
-		for (int j = 0; pThunk[j].u1.AddressOfData != 0; j++)
-		{
-			item_num++; //Ò»¸ödllÖÐµ¼Èëº¯ÊýµÄ¸öÊý,²»°üÀ¨È«0µÄÏî
-			if ((pThunk[j].u1.Ordinal >> 31) != 0x1) //²»ÊÇÓÃÐòºÅ
-			{
-				auto pFuncName = (PIMAGE_IMPORT_BY_NAME)(pShellBuf + pThunk[j].u1.AddressOfData);
-				pThunk[j].u1.AddressOfData += shellBaseRva;
-			}
-		}
-		memcpy(pShellBuf + pImportDescriptor[i].FirstThunk,
-			pShellBuf + pImportDescriptor[i].OriginalFirstThunk,
-			item_num * sizeof(IMAGE_THUNK_DATA));//ÓÉÓÚfirst thunk ÔÚ dll ¼ÓÔØºóÒÑ¾­±»Ìæ»»³ÉiatÁË£¬Ó¦¸ÃÓÃoft»¹Ô­
-		pImportDescriptor[i].OriginalFirstThunk += shellBaseRva;
-		pImportDescriptor[i].Name += shellBaseRva;
-		pImportDescriptor[i].FirstThunk += shellBaseRva;
-		func_num += item_num;
-	}
-	return func_num;
+	return m_shellpe.shiftOft(shellBaseRva);
 }
 
 DWORD CSimpleDpack::packSection(int type)	//´¦Àí¸÷Çø¶Î
@@ -147,7 +88,7 @@ DWORD CSimpleDpack::packSection(int type)	//´¦Àí¸÷Çø¶Î
 	//pack¸÷Çø¶Î,ÔÝÊ±Ö»Ñ¹Ëõ´úÂë¶Î
 	m_dpackSectNum = 0;
 	DWORD srcrva = m_exepe.getOptionalHeader()->BaseOfCode;//»ñÈ¡code¶Îrva
-	LPBYTE srcBuf = m_exepe.getFileBuf() + srcrva;//Ö¸Ïò»º´æÇø
+	LPBYTE srcBuf = m_exepe.getPeBuf() + srcrva;//Ö¸Ïò»º´æÇø
 	DWORD srcsize = m_exepe.getOptionalHeader()->SizeOfCode + sizeof(DLZMA_HEADER);//Ñ¹Ëõ´óÐ¡
 	DWORD dstsize = dlzmaPack(&dstBuf, srcBuf, srcsize);//Ñ¹Ëõ
 	if (dstsize == 0) return 0;
@@ -177,35 +118,33 @@ DWORD CSimpleDpack::loadShellDll(const char* dllpath, int type)	//´¦ÀíÍâ¿Ç,ÈôÆäË
 	DWORD trva = m_exepe.getOptionalHeader()->SizeOfImage + meminfo.SizeOfImage;
 	for (int i = 0; i < m_dpackSectNum; i++)//½«Ñ¹ËõÇø¶ÎÐÅÏ¢´æÈ¡shell
 	{
-		p_sh->SectionIndex[i].OrgRva = m_dpackIndex[i].srcRva;
-		p_sh->SectionIndex[i].OrgSize = m_dpackIndex[i].srcMemSize;
+		p_sh->SectionIndex[i].OrgRva = m_dpackIndex[i].OrgRva;
+		p_sh->SectionIndex[i].OrgSize = m_dpackIndex[i].OrgMemSize;
 		p_sh->SectionIndex[i].PackedRva = trva;
-		p_sh->SectionIndex[i].PackedSize = m_dpackIndex[i].packBufSize;
-		trva += CPEinfo::toAlignment(m_dpackIndex[i].packBufSize, m_exepe.getOptionalHeader()->SectionAlignment);
+		p_sh->SectionIndex[i].PackedSize = m_dpackIndex[i].PackedSize;
+		trva += CPEinfo::toAlignment(m_dpackIndex[i].PackedSize, m_exepe.getOptionalHeader()->SectionAlignment);
 	}
 	p_sh->SectionNum = m_dpackSectNum;
 
-	//¸´ÖÆdpack shell ´úÂë
-	LPBYTE dstBuf = new BYTE[meminfo.SizeOfImage];
-	memcpy(dstBuf, hShell, meminfo.SizeOfImage);
-	m_shellpe.attachPeBuf(dstBuf, meminfo.SizeOfImage, false);
+	// ¸´ÖÆdpack shell ´úÂë£¬Ö±½Ó¸ÄhshellÎÞ·¨Ð´Èë
+	LPBYTE pShellBuf = new BYTE[meminfo.SizeOfImage];// ÓÉiniDpackIndexÀïÃæÇåÀí
+	memcpy(pShellBuf, (void*)hShell, meminfo.SizeOfImage); // ¸´ÖÆµ½ÐÂ»º´æÇø£¬·ÀÖ¹virtual protectÎÞ·¨ÐÞ¸Ä
+	m_shellpe.attachPeBuf(pShellBuf, meminfo.SizeOfImage, false);
 	
-	//ÉèÖÃdpack shellÖØ¶¨Î»ÐÅÏ¢, iatÐÅÏ¢
+	// ÉèÖÃdpack shellÖØ¶¨Î»ÐÅÏ¢, iatÐÅÏ¢
 	DWORD exeImageSize = m_exepe.getOptionalHeader()->SizeOfImage;
-	adjustShellReloc(dstBuf, hShell, exeImageSize);
-	adjustShellIat(dstBuf, hShell, exeImageSize);
-	addDpackIndex(dstBuf, meminfo.SizeOfImage); //¼ÇÂ¼shell Ö¸Õë
+	adjustShellReloc(exeImageSize);
+	adjustShellIat(exeImageSize);
+	addDpackIndex(pShellBuf, meminfo.SizeOfImage); //¼ÇÂ¼shell Ö¸Õë
 	
-	//ÉèÖÃ±»¼Ó¿Ç³ÌÐòµÄÐÅÏ¢, oep, reloc, iat
+	// ÉèÖÃ±»¼Ó¿Ç³ÌÐòµÄÐÅÏ¢, oep, reloc, iat
 	m_exepe.setOepRva(p_sh->DpackOepRva - (DWORD)hShell + exeImageSize);
-	m_exepe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress =
-		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress + exeImageSize;
-	m_exepe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size =
-		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size;
-	m_exepe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress =
-		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress + exeImageSize;
-	m_exepe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].Size =
-		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].Size;
+	m_exepe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC] = {
+		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress + exeImageSize,
+		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size };
+	m_exepe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT] = {
+		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress + exeImageSize,
+		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].Size };
 	return meminfo.SizeOfImage;
 }
 /*private functions end*/
@@ -216,9 +155,10 @@ DWORD CSimpleDpack::loadPeFile(const char* path)//¼ÓÔØpeÎÄ¼þ£¬·µ»ØisPE()Öµ
 	DWORD res = m_exepe.openPeFile(path);
 	return res;
 }
+
 DWORD CSimpleDpack::packPe(const char* dllpath, int type)//¼Ó¿Ç£¬Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØpackÊý¾Ý´óÐ¡
 {
-	if (m_exepe.getFileBuf() == NULL) return 0;
+	if (m_exepe.getPeBuf() == NULL) return 0;
 	DWORD allsize = 0, tmpsize;
 	iniDpackIndex();
 	tmpsize = packSection(type);
@@ -228,10 +168,12 @@ DWORD CSimpleDpack::packPe(const char* dllpath, int type)//¼Ó¿Ç£¬Ê§°Ü·µ»Ø0£¬³É¹¦
 	if (tmpsize == 0) return 0;
 	return allsize;
 }
+
 DWORD CSimpleDpack::unpackPe(int type)//ÍÑ¿Ç£¬ÆäËûÍ¬ÉÏ£¨ÔÝÊ±²»ÊµÏÖ£©
 {
 	return 0;
 }
+
 DWORD CSimpleDpack::savePe(const char* path)//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØÎÄ¼þ´óÐ¡
 {
 	/*
@@ -241,7 +183,7 @@ DWORD CSimpleDpack::savePe(const char* path)//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØÎÄ¼þ´óÐ¡
 	*/
 	char sect_name[8] = ".dpack";
 	auto pSecHeader = m_exepe.getSectionHeader();
-	DWORD sect_faddr = (DWORD)((LPBYTE)pSecHeader - m_exepe.getFileBuf());
+	DWORD sect_faddr = (DWORD)((LPBYTE)pSecHeader - m_exepe.getPeBuf());
 	WORD  oldsect_num = m_exepe.getFileHeader()->NumberOfSections;
 	DWORD oldhsize = m_exepe.getOptionalHeader()->SizeOfHeaders; //Ô­À´peÍ·´óÐ¡
 	DWORD newhsize = oldhsize;
@@ -265,9 +207,9 @@ DWORD CSimpleDpack::savePe(const char* path)//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØÎÄ¼þ´óÐ¡
 	{
 		auto ptSect = &pOldSect[i];
 		ptSect->PointerToRawData = tfaddr;//ÐÞ¸ÄÒòÓÐÐ©Çø¶ÎÎÄ¼þÉÏ¿ÕµÄÆ«ÒÆ
-		while (m_dpackIndex[j].srcRva == 0 && j < m_dpackSectNum - 1) { j++; }//Ìø¹ý²»ÊÇÔ­À´Çø¶ÎpackµÄ
-		if (ptSect->VirtualAddress + ptSect->Misc.VirtualSize <= m_dpackIndex[j].srcRva
-			|| m_dpackIndex[j].srcRva == 0 || j > m_dpackSectNum - 1)//²»ÊÇ¿ÕÇø¶Î
+		while (m_dpackIndex[j].OrgRva == 0 && j < m_dpackSectNum - 1) { j++; }//Ìø¹ý²»ÊÇÔ­À´Çø¶ÎpackµÄ
+		if (ptSect->VirtualAddress + ptSect->Misc.VirtualSize <= m_dpackIndex[j].OrgRva
+			|| m_dpackIndex[j].OrgRva == 0 || j > m_dpackSectNum - 1)//²»ÊÇ¿ÕÇø¶Î
 		{
 			tfaddr += CPEinfo::toAlignment(ptSect->SizeOfRawData, file_align);
 		}
@@ -285,10 +227,10 @@ DWORD CSimpleDpack::savePe(const char* path)//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØÎÄ¼þ´óÐ¡
 	auto ptSect = &pNewSect[0];//µÚÒ»¸ö·Åshell code
 	memset(ptSect, 0, sizeof(IMAGE_SECTION_HEADER));
 	memcpy(ptSect->Name, sect_name, 8);
-	ptSect->SizeOfRawData = m_dpackIndex[m_dpackSectNum - 1].packBufSize;
+	ptSect->SizeOfRawData = m_dpackIndex[m_dpackSectNum - 1].PackedSize;
 	ptSect->PointerToRawData = tfaddr;
 	ptSect->VirtualAddress = trva;
-	ptSect->Misc.VirtualSize = m_dpackIndex[m_dpackSectNum - 1].packBufSize;
+	ptSect->Misc.VirtualSize = m_dpackIndex[m_dpackSectNum - 1].PackedSize;
 	ptSect->Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_EXECUTE;
 	trva += CPEinfo::toAlignment(ptSect->Misc.VirtualSize, mem_align);
 	tfaddr += CPEinfo::toAlignment(ptSect->SizeOfRawData, file_align);
@@ -298,10 +240,10 @@ DWORD CSimpleDpack::savePe(const char* path)//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØÎÄ¼þ´óÐ¡
 		memset(ptSect, 0, sizeof(IMAGE_SECTION_HEADER));
 
 		memcpy(ptSect->Name, sect_name, 8);
-		ptSect->SizeOfRawData = m_dpackIndex[i - 1].packBufSize;
+		ptSect->SizeOfRawData = m_dpackIndex[i - 1].PackedSize;
 		ptSect->PointerToRawData = tfaddr;
 		ptSect->VirtualAddress = trva;
-		ptSect->Misc.VirtualSize = m_dpackIndex[i - 1].packBufSize;
+		ptSect->Misc.VirtualSize = m_dpackIndex[i - 1].PackedSize;
 		ptSect->Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_EXECUTE;
 		trva += CPEinfo::toAlignment(ptSect->Misc.VirtualSize, mem_align);
 		tfaddr += CPEinfo::toAlignment(ptSect->SizeOfRawData, file_align);
@@ -314,7 +256,7 @@ DWORD CSimpleDpack::savePe(const char* path)//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØÎÄ¼þ´óÐ¡
 	m_exepe.getOptionalHeader()->SizeOfImage = trva;//peÍ·µÄÆäËûÐÅÏ¢ÐÞ¸Ä
 	m_exepe.getFileHeader()->NumberOfSections = oldsect_num + m_dpackSectNum;
 	m_exepe.getFileHeader()->Characteristics |= IMAGE_FILE_RELOCS_STRIPPED; //½ûÖ¹»ùÖ·Ëæ»ú»¯
-	memcpy(pNewBuf, m_exepe.getFileBuf(), oldhsize);//¾ÉpeÍ·
+	memcpy(pNewBuf, m_exepe.getPeBuf(), oldhsize);//¾ÉpeÍ·
 	memcpy(pNewBuf + sect_faddr, pOldSect, sizeof(IMAGE_SECTION_HEADER) * oldsect_num);//¾ÉÇø¶ÎÍ·
 	memcpy(pNewBuf + sect_faddr + oldsect_num * sizeof(IMAGE_SECTION_HEADER), pNewSect,
 		m_dpackSectNum * sizeof(IMAGE_SECTION_HEADER));//ÐÂÇø¶ÎÍ·
@@ -324,15 +266,15 @@ DWORD CSimpleDpack::savePe(const char* path)//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØÎÄ¼þ´óÐ¡
 		if (ptSect->SizeOfRawData != 0)
 		{
 			memcpy(pNewBuf + pOldSect[i].PointerToRawData,
-				m_exepe.getFileBuf() + ptSect->VirtualAddress, ptSect->SizeOfRawData);
+				m_exepe.getPeBuf() + ptSect->VirtualAddress, ptSect->SizeOfRawData);
 		}
 	}
 	memcpy(pNewBuf + pNewSect[0].PointerToRawData, //×¢ÒâÇø¶ÎÊý¾ÝÓëË÷ÒýµÄ¶ÔÓ¦¹ØÏµ
-		m_dpackIndex[m_dpackSectNum - 1].packBuf, m_dpackIndex[m_dpackSectNum - 1].packBufSize);
+		m_dpackIndex[m_dpackSectNum - 1].PackedBuf, m_dpackIndex[m_dpackSectNum - 1].PackedSize);
 	for (int i = 1; i < m_dpackSectNum; i++)//ÐÂÇø¶ÎÊý¾Ý
 	{
 		memcpy(pNewBuf + pNewSect[i].PointerToRawData,
-			m_dpackIndex[i - 1].packBuf, m_dpackIndex[i - 1].packBufSize);
+			m_dpackIndex[i - 1].PackedBuf, m_dpackIndex[i - 1].PackedSize);
 	}
 	
 	//Ð´ÈëÎÄ¼þ
@@ -343,6 +285,7 @@ DWORD CSimpleDpack::savePe(const char* path)//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØÎÄ¼þ´óÐ¡
 	delete[] pNewBuf;
 	return savesize;
 }
+
 CPEinfo* CSimpleDpack::getExepe()
 {
 	return &m_exepe;
