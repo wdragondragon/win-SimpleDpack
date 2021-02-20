@@ -18,30 +18,21 @@
     <ClInclude Include="..\src\debugtry.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\dpackCode.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\dpackType.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\dunpackCode.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\PeInfo.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\SimpleDpack.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\PeEdit.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dpackType.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\debugtry.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\dpackCode.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\dunpackCode.c">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\PeInfo.cpp">
@@ -51,6 +42,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\WinConsole.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\PeEdit.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dpackProc.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dunpackProc.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

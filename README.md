@@ -1,33 +1,62 @@
 # SimpleDpack
-<p>windows pe packing 
-<p>This is an aplication for packing windows pe image.
-<p>Designed by devseed
+A  very simple windows EXE packing tool, 
+
+for learning or investigating PE structure.
+
+Designed by [devseed](https://github.com/YuriSizuku/SimpleDpack).
+
 ### usage:
-<p>cmdline or drag the file on simpledpack.exe
-<p>simpledpack inpath [outpath]
+
+```SH
+::cmdline or drag the file on simpledpack.exe
+simpledpack inpath [outpath]
+simpledpack64 inpath [outpath]
+```
+
+
 ## features：
 
-* windows exe pe32 and ~~pe64~~ pack
-* pack multi sections (except rsrc section)
 
-### attentions:
+* some of the windows EXE packing, with pe32 and ~~pe64~~ 
+* using LZMA for pack multi sections (except rsrc section)
+* the shell code are compiled in DLL by C,  then appended in exe after adjusting each of the address recorded in .reloc.
+* it can be easily to expand
 
-* the initial demo version that can pack the pe32 exe file code section by lzma through dll
-* new it can only support a little various of exe file,so just be regardless of the compatibility
-* now Anti-virus software may regard the packed file as an viru
-* other functions will be coming soon...
+## structures
 
-### coming soon:
-* pack multi sections (will done)
-* win64 pe (will done)
-* ciphering and spagetti codes to make it hard to reverse
-* stolen oep codes
-* ...
+```
+[dpack packing project]
+debugtry.c       // functions to debug
+WinConsole.cpp   // cmd shellPeInfo.cpp			  
+CPInfo.cpp       // base class CPEinfo to inspect pe	files, such as addr converter
+CPEedit.cpp      // a class to edit the pe structure
+SimpleDpack.cpp  // base class CSimpleDpack to pack pe
 
-### versions:
+[dpack shell dll]
+simpledpackshell.cpp    // shell code to start packed pe
+dllmain                            
+
+[packing program code]
+dpackProc.c	    // pack functions
+dunpackProc.c   // unpack functions
+dpackType.c     // structures decleare
+```
+
+## versions log:
+
 * v0.1(initial release)
   * lzma compress only code section in win32 exe
   * c++ class to resolve pe(win32 exe),util fuctions
   * relocate the shell codes dll(c) and add in win32 exe
 * v0.1.1 update the tool to vs2019
-* v0.2 rewrite some code and make it more clear
+* v0.2 rewrite some code and make it more clear,  merge the pe32 and pe64 structure
+* v0.3 refracts the class and code, removing useless code, to make it more easy to understand 
+* v0.3.1 make pack program workflow clean
+
+## coming soon(maybe...):
+
+* pack multi sections (will done)
+* win64 pe (will done)
+* ciphering and spagetti codes to make it hard to reverse
+* stolen oep codes
+* ...

@@ -11,7 +11,7 @@ typedef struct _DLZMA_HEADER
 	char LzmaProps[LZMA_PROPS_SIZE];//原始lzma的文件头
 }DLZMA_HEADER, * PDLZMA_HEADER;//此处外围添加适用于dpack的lzma头
 
-typedef struct _ORIGION_INDEX   //源程序被隐去的信息，此结构为明文表示，地址全是rva
+typedef struct _DPACK_ORGPE_INDEX   //源程序被隐去的信息，此结构为明文表示，地址全是rva
 {
 #ifdef _WIN64
 	ULONGLONG ImageBase;			//源程序基址
@@ -21,25 +21,30 @@ typedef struct _ORIGION_INDEX   //源程序被隐去的信息，此结构为明文表示，地址全是
 	DWORD OepRva;				//原程序rva入口
 	DWORD ImportRva;			//导入表信息
 	DWORD ImportSize;
-}ORIGION_INDEX, * PORIGION_INDEX;
+}DPACK_ORGPE_INDEX, * PDPACK_ORGPE_INDEX;
 
-typedef struct _SECTION_INDEX //源信息与压缩变换后信息索引表是
+typedef struct _DPACK_SECTION_ENTRY //源信息与压缩变换后信息索引表是
 {
 	//假设不超过4g
 	DWORD OrgRva;
 	DWORD OrgSize;
 	DWORD PackedRva;
 	DWORD PackedSize;
-}SECTION_INDEX, * PSECTION_INDEX;
+	DWORD Characteristics;
+}DPACK_SECTION_ENTRY, * PDPACK_SECTION_ENTRY;
 
-typedef struct _DPACK_HDADER//DPACK变换头
+typedef struct _DPACK_SHELL_INDEX//DPACK变换头
 {
-	DWORD DpackOepRva;								//壳的入口（放第一个元素方便初始化）
-	ORIGION_INDEX OrgIndex;
+	union 
+	{
+		PVOID DpackOepFunc;  // 初始化壳的入口函数（放第一个元素方便初始化）
+		DWORD DpackOepRva;  // 加载shellcode后也许改成入口RVA
+	};
+	DPACK_ORGPE_INDEX OrgIndex;
 	WORD SectionNum;									//变换的区段数，最多MAX_DPACKSECTNUM区段
-	SECTION_INDEX SectionIndex[MAX_DPACKSECTNUM];		//变换区段索引, 以全0结尾
+	DPACK_SECTION_ENTRY SectionIndex[MAX_DPACKSECTNUM];		//变换区段索引, 以全0结尾
 	PVOID Extra;									//其他信息，方便之后拓展
-}DPACK_HDADER, * PDPACK_HDADER;
+}DPACK_SHELL_INDEX, * PDPACK_SHELL_INDEX;
 
 DWORD dlzmaPack(LPBYTE dst,LPBYTE src,DWORD size);
 DWORD dlzmaUnpack(LPBYTE dst, LPBYTE src, DWORD size);

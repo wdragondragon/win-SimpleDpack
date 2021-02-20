@@ -20,16 +20,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\debugtry.h" />
-    <ClInclude Include="..\src\dpackCode.h" />
     <ClInclude Include="..\src\dpackType.h" />
-    <ClInclude Include="..\src\dunpackCode.h" />
+    <ClInclude Include="..\src\PeEdit.hpp" />
     <ClInclude Include="..\src\PeInfo.hpp" />
     <ClInclude Include="..\src\SimpleDpack.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\debugtry.cpp" />
-    <ClCompile Include="..\src\dpackCode.c" />
-    <ClCompile Include="..\src\dunpackCode.c" />
+    <ClCompile Include="..\src\dpackProc.c" />
+    <ClCompile Include="..\src\dunpackProc.c" />
+    <ClCompile Include="..\src\PeEdit.cpp" />
     <ClCompile Include="..\src\PeInfo.cpp" />
     <ClCompile Include="..\src\SimpleDpack.cpp" />
     <ClCompile Include="..\src\WinConsole.cpp" />

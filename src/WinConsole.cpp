@@ -10,16 +10,12 @@ using namespace std;
 */
 int main(int argc,char *argv[])
 {
-	cout<<"-----------------SimpleDpack ver0.2--------------------"<<endl;
-	cout<<"[1]pack the pe32/pe64 exe file"<<endl;
-	cout<<"   code section by lzma through dll"<<endl;
-	cout<<"[2]new it can pack multi segments,"<<endl;
-	cout<<"   x64 version will come soon" <<endl;
-	cout<<"[3]now Anti-virus software may regard the packed file as an viru"<<endl;
-	cout<<"[4]other functions will be coming soon..."<<endl;
-	cout<<"----useage:cmdline or drag the file on simpledpack.exe"<<endl;
+	cout<<"-----------------SimpleDpack ver0.3--------------------"<<endl;
+	cout << "A very simple windows EXE packing tool, " << endl;
+	cout << "for learning or investigating PE structure. " << endl;
+	cout << "designed by devseed" << endl;
+	cout<<"--useage:cmdline or drag the file on simpledpack.exe"<<endl;
 	cout<<"simpledpack inpath [outpath]"<<endl;
-	cout<<"----designed by devseed"<<endl;
 	cout<<"-------------------------------------------------------"<<endl;
 	if(argc<=1)
 	{

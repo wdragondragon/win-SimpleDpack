@@ -70,10 +70,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\externlib\include;$(IncludePath)</IncludePath>
+    <OutDir>..\bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\externlib\include;$(IncludePath)</IncludePath>
+    <OutDir>..\bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -83,6 +85,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\bin</OutDir>
+    <TargetName>$(ProjectName)64</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -155,12 +159,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\dllmain.cpp" />
-    <ClCompile Include="..\src\dunpackCode.c" />
+    <ClCompile Include="..\src\dunpackProc.c" />
     <ClCompile Include="..\src\simpledpackshell.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\dpackType.h" />
-    <ClInclude Include="..\src\dunpackCode.h" />
     <ClInclude Include="..\src\simpledpackshell.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

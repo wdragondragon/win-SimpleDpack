@@ -1,3 +1,10 @@
+/*
+	SimpleDpack v0.3.1 ,
+	to pack the pe32/pe64 pe file
+	designed by devseed,
+	https://github.com/YuriSizuku/SimpleDpack/
+*/
+
 #include <Windows.h>
 #include "PEedit.hpp"
 extern "C" // c++中引用c必须要这样
@@ -11,13 +18,13 @@ extern "C" // c++中引用c必须要这样
 	pack the pe file class
 */
 
-typedef struct _DPACKSECT_INDEX
+typedef struct _DPACK_TMPBUF_ENTRY
 {
 	LPBYTE PackedBuf;
 	DWORD  PackedSize;
 	DWORD  OrgRva;//若此项为0，则添加到最后一个区段
 	DWORD  OrgMemSize;
-}DPACKSECT_INDEX, * PDPACKSECT_INDEX;
+}DPACK_TMPBUF_ENTRY, * PDPACK_TMPBUF_ENTRY;
 
 class CSimpleDpack
 {
@@ -28,20 +35,23 @@ private:
 	char m_strFilePath[MAX_PATH];
 
 protected:
-	CPEedit m_exepe; // 需要加壳的exe pe结构
+	CPEedit m_packpe; // 需要加壳的exe pe结构
 	CPEedit m_shellpe; // 壳的pe结构
-	PDPACK_HDADER m_gShellHeader; // dll中的导出结构
+	PDPACK_SHELL_INDEX m_pShellIndex; // dll中的导出结构
 	HMODULE m_hShell; // 壳dll的句柄
 
 	WORD m_dpackSectNum; 
-	DPACKSECT_INDEX m_dpackIndex[MAX_DPACKSECTNUM]; // 加壳区段索引
+	DPACK_TMPBUF_ENTRY m_dpackTmpbuf[MAX_DPACKSECTNUM]; // 加壳区段索引
 
-	WORD iniDpackIndex();//返回原来dpackIndex数量
-	WORD addDpackIndex(LPBYTE packBuf, DWORD packBufSize, DWORD srcRva = 0, DWORD OrgMemSize = 0);//增加dpack索引
+	WORD initDpackTmpbuf();//返回原来dpackTmpBuf数量
+	WORD addDpackTmpbufEntry (LPBYTE packBuf, DWORD packBufSize, DWORD srcRva = 0, DWORD OrgMemSize = 0);//增加dpack索引
 	DWORD packSection(int type=1);	//pack各区段
-	DWORD adjustShellReloc(DWORD shellBaseRva);//设置dll重定位信息，返回个数
-	DWORD adjustShellIat(DWORD shellBaseRva);//设置由偏移造成的dll iat错误
-	DWORD loadShellDll(const char* dllpath, int type=1);	//处理外壳
+	
+	DWORD loadShellDll(const char* dllpath);	//处理外壳, return dll size
+	void initShellIndex(DWORD shellSize);
+	DWORD adjustShellReloc(DWORD shellBaseRva);// 设置dll重定位信息，返回个数
+	DWORD adjustShellIat(DWORD shellBaseRva);// 设置由偏移造成的dll iat错误
+	void adjustPackpeHeaders(); // 调整加上shellcode后的pe头信息
 
  public:
 	CSimpleDpack()

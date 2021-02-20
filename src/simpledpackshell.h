@@ -1,3 +1,10 @@
+/*
+	simpledpackshell v0.3.1 ,
+	The shellcode to be append to exe file to unpack
+	designed by devseed,
+	https://github.com/YuriSizuku/SimpleDpack/
+*/
+
 #include <Windows.h>
 #define DPACK_API __declspec(dllexport)
 #define DLZMANOPACK

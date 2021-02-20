@@ -38,7 +38,7 @@ DWORD CPEedit::setOepRva(LPBYTE pPeBuf, DWORD rva)//返回原来的rva
 	return oldrva;
 }
 
-DWORD CPEedit::shiftReloc(LPBYTE pPeBuf, ULONGLONG oldImageBase, ULONGLONG newImageBase, DWORD offset, bool bMemAlign)
+DWORD CPEedit::shiftReloc(LPBYTE pPeBuf, size_t oldImageBase, size_t newImageBase, DWORD offset, bool bMemAlign)
 {
 	//修复重定位,其实此处pShellBuf为hShell副本
 	DWORD all_num = 0;
@@ -115,7 +115,7 @@ DWORD CPEedit::setOepRva(DWORD rva)
 	return setOepRva(m_pPeBuf, rva);
 }
 
-DWORD  CPEedit::shiftReloc(ULONGLONG oldImageBase, ULONGLONG newImageBase, DWORD offset)
+DWORD  CPEedit::shiftReloc(size_t oldImageBase, size_t newImageBase, DWORD offset)
 {
 	return shiftReloc(m_pPeBuf, oldImageBase, newImageBase, offset, m_bMemAlign);
 }

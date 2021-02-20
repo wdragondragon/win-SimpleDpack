@@ -1,7 +1,7 @@
 #include "simpledpackshell.h"
 void dpackStart();
 extern "C" {
-	DPACK_API DPACK_HDADER g_shellHeader = { (DWORD)dpackStart,0 };//顺便初始化壳oep
+	DPACK_API DPACK_SHELL_INDEX g_dpackShellIndex = { (PVOID)dpackStart,0 };//顺便初始化壳oep
 }
 #ifdef _WIN64
 ULONGLONG g_orgOep
@@ -36,7 +36,7 @@ __declspec(naked) void dpackStart()//此函数中不要有局部变量
 	BeforeUnpack();
 	MallocAll(NULL);
 	UnpackAll(NULL);
-	g_orgOep = g_shellHeader.OrgIndex.ImageBase + g_shellHeader.OrgIndex.OepRva;
+	g_orgOep = g_dpackShellIndex.OrgIndex.ImageBase + g_dpackShellIndex.OrgIndex.OepRva;
 	LoadOrigionIat(NULL);
 	AfterUnpack();
 	JmpOrgOep();
@@ -44,7 +44,36 @@ __declspec(naked) void dpackStart()//此函数中不要有局部变量
 
 void MallocAll(PVOID arg)
 {
-
+	MEMORY_BASIC_INFORMATION mi = { 0 };
+	HANDLE hProcess = GetCurrentProcess();
+	HMODULE imagebase = GetModuleHandle(NULL);
+	for (int i = 0; i < g_dpackShellIndex.SectionNum; i++)
+	{
+		LPBYTE tVa = (LPBYTE)imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva;
+		DWORD tSize = g_dpackShellIndex.SectionIndex[i].OrgSize;
+		VirtualQueryEx(hProcess, tVa, &mi, tSize);
+		if(mi.State == MEM_FREE)
+		{
+			DWORD flProtect = PAGE_EXECUTE_READWRITE;
+			switch (g_dpackShellIndex.SectionIndex[i].Characteristics)
+			{
+			    case IMAGE_SCN_MEM_EXECUTE:
+					flProtect = PAGE_EXECUTE;
+					break;
+				case IMAGE_SCN_MEM_READ:
+					flProtect = PAGE_READONLY;
+					break;
+				case IMAGE_SCN_MEM_WRITE:
+					flProtect = PAGE_READWRITE;
+					break;
+			}
+			if(!VirtualAllocEx(hProcess, tVa, tSize, MEM_COMMIT, flProtect))
+			{
+				MessageBox(NULL,"Alloc memory failed", "error", NULL);
+				ExitProcess(1);
+			}
+		}
+	}   
 }
 
 void UnpackAll(PVOID arg)
@@ -54,27 +83,27 @@ void UnpackAll(PVOID arg)
 	DWORD oldProtect;
 	LPBYTE buf;
 #ifdef _WIN64
-	ULONGLONG imagebase = g_shellHeader.OrgIndex.ImageBase;
+	ULONGLONG imagebase = g_dpackShellIndex.OrgIndex.ImageBase;
 #else
-	DWORD imagebase = g_shellHeader.OrgIndex.ImageBase;
+	DWORD imagebase = g_dpackShellIndex.OrgIndex.ImageBase;
 #endif
-	for(i=0; i<g_shellHeader.SectionNum; i++)
+	for(i=0; i<g_dpackShellIndex.SectionNum; i++)
 	{
-		buf = new BYTE[g_shellHeader.SectionIndex[i].OrgRva];
-		res = dlzmaUnpack(buf, (LPBYTE)(g_shellHeader.SectionIndex[i].PackedRva + imagebase),
-			g_shellHeader.SectionIndex[i].PackedSize);
+		buf = new BYTE[g_dpackShellIndex.SectionIndex[i].OrgRva];
+		res = dlzmaUnpack(buf, (LPBYTE)(g_dpackShellIndex.SectionIndex[i].PackedRva + imagebase),
+			g_dpackShellIndex.SectionIndex[i].PackedSize);
 		if(res==0) 
 		{
 			MessageBox(0,"unpack failed","error",0);
 			ExitProcess(1);
 		}
-		VirtualProtect((LPVOID)(imagebase + g_shellHeader.SectionIndex[i].OrgRva),
-						g_shellHeader.SectionIndex[i].OrgSize,
+		VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+						g_dpackShellIndex.SectionIndex[i].OrgSize,
 						PAGE_EXECUTE_READWRITE ,&oldProtect);
-		memcpy((void *)(imagebase + g_shellHeader.SectionIndex[i].OrgRva),
-				buf,g_shellHeader.SectionIndex[i].OrgSize);
-		VirtualProtect((LPVOID)(imagebase + g_shellHeader.SectionIndex[i].OrgRva),
-			            g_shellHeader.SectionIndex[i].OrgSize,
+		memcpy((void *)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+				buf,g_dpackShellIndex.SectionIndex[i].OrgSize);
+		VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+			            g_dpackShellIndex.SectionIndex[i].OrgSize,
 			            oldProtect, &oldProtect);
 		delete[] buf;
 	}
@@ -83,7 +112,7 @@ void UnpackAll(PVOID arg)
 void LoadOrigionIat(PVOID arg)  // 因为将iat改为了壳的，所以要还原原来的iat
 {
 	DWORD i,j;
-	DWORD dll_num = g_shellHeader.OrgIndex.ImportSize
+	DWORD dll_num = g_dpackShellIndex.OrgIndex.ImportSize
 		/sizeof(IMAGE_IMPORT_DESCRIPTOR);//导入dll的个数,含最后全为空的一项
 	DWORD item_num=0;//一个dll中导入函数的个数,不包括全0的项
 	DWORD oldProtect;
@@ -91,13 +120,13 @@ void LoadOrigionIat(PVOID arg)  // 因为将iat改为了壳的，所以要还原原来的iat
 	LPBYTE tName;//临时存放名字
 #ifdef _WIN64
 	ULONGLONG tVa;//临时存放虚拟地址
-	ULONGLONG imagebase = g_shellHeader.OrgIndex.ImageBase;
+	ULONGLONG imagebase = g_dpackShellIndex.OrgIndex.ImageBase;
 #else
 	DWORD tVa;//临时存放虚拟地址
-	DWORD imagebase = g_shellHeader.OrgIndex.ImageBase;
+	DWORD imagebase = g_dpackShellIndex.OrgIndex.ImageBase;
 #endif
 	PIMAGE_IMPORT_DESCRIPTOR pImport=(PIMAGE_IMPORT_DESCRIPTOR)(imagebase+
-		g_shellHeader.OrgIndex.ImportRva);//指向第一个dll
+		g_dpackShellIndex.OrgIndex.ImportRva);//指向第一个dll
 	PIMAGE_THUNK_DATA pfThunk;//ft
 	PIMAGE_THUNK_DATA poThunk;//oft
 	PIMAGE_IMPORT_BY_NAME pFuncName;
