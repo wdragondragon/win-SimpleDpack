@@ -1,5 +1,5 @@
 /*
-	simpledpackshell v0.4 ,
+	simpledpackshell v0.5 ,
 	The shellcode to be append to exe file to unpack
 	designed by devseed,
 	https://github.com/YuriSizuku/SimpleDpack/

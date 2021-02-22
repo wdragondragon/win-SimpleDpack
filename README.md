@@ -17,7 +17,7 @@ simpledpack64 inpath [outpath]
 ## features：
 
 
-* some of the windows EXE packing, with pe32 and ~~pe64~~ 
+* some of the windows EXE packing, with pe32 and pe64 (I have test the hello world program packing) 
 * using LZMA for pack multi sections (except rsrc section)
 * the shell code are compiled in DLL by C,  then appended in exe after adjusting each of the address recorded in .reloc.
 * it can be easily to expand
@@ -54,11 +54,12 @@ dpackType.c     // structures decleare
 * v0.3.1 make pack program workflow clean
 * v0.3.2  appendSection, savePe rewrite,  merge the shellcode and packed data into one section
 * v0.4 multi section (except rsrc) pack finished!
+* v0.5 x64 supprot!
 
 ## coming soon(maybe...):
 
-* pack multi sections (will done)
-* win64 pe (will done)
-* ciphering and spagetti codes to make it hard to reverse
+* ~~pack multi sections (done)~~
+* ~~win64 pe (done)~~
+* ciphering and spagetti codes to make it hard to reverse (just for fine)
 * stolen oep codes
 * ...

@@ -92,7 +92,7 @@ int CPEinfo::isPe(LPBYTE pPeBuf)
 {
 	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)pPeBuf;
 	if(pDosHeader->e_magic!=IMAGE_DOS_SIGNATURE) return -1; //"MZ"
-	PIMAGE_NT_HEADERS32 pNtHeader = getNtHeader(pPeBuf);
+	PIMAGE_NT_HEADERS pNtHeader = getNtHeader(pPeBuf);
 	if(pNtHeader->Signature != IMAGE_NT_SIGNATURE) return -2;  //"PE\0\0"
 	return pNtHeader->OptionalHeader.Magic; 
 }
@@ -108,7 +108,7 @@ DWORD CPEinfo::toAlign(DWORD num,DWORD align)
 PIMAGE_NT_HEADERS CPEinfo::getNtHeader(LPBYTE pPeBuf)
 {
 	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)pPeBuf;
-	return (PIMAGE_NT_HEADERS32)(pPeBuf + pDosHeader->e_lfanew);
+	return (PIMAGE_NT_HEADERS)(pPeBuf + pDosHeader->e_lfanew);
 }
 
 PIMAGE_FILE_HEADER CPEinfo::getFileHeader(LPBYTE pPeBuf)
@@ -342,7 +342,7 @@ DWORD CPEinfo::rva2va(LPBYTE pPeBuf, DWORD rva)
 }
 
 #ifdef _WIN64
-ULONGLONG CPEinfo::faddr2va(char* path, DWORD faddr)
+ULONGLONG CPEinfo::faddr2va(const char* path, DWORD faddr)
 #else
 DWORD CPEinfo::faddr2va(const char* path, DWORD faddr)
 #endif
@@ -658,7 +658,7 @@ ULONGLONG CPEinfo::rva2va(DWORD rva) const
 	return rva2va(m_pPeBuf, rva);
 }
 
-ULONGLONG CPEinfo::faddr2va(faddr) const
+ULONGLONG CPEinfo::faddr2va(DWORD faddr) const
 {
 	return faddr2va(m_pPeBuf, faddr);
 }

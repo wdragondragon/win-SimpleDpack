@@ -33,4 +33,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\shellcode64.asm">
+      <Filter>源文件</Filter>
+    </None>
+  </ItemGroup>
 </Project>

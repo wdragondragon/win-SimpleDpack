@@ -1,5 +1,5 @@
 /*
-	SimpleDpack v0.4 ,
+	SimpleDpack v0.5 ,
 	to pack the pe32/pe64 pe file
 	designed by devseed,
 	https://github.com/YuriSizuku/SimpleDpack/

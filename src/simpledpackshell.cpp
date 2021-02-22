@@ -2,24 +2,28 @@
 void dpackStart();
 extern "C" {
 	DPACK_API DPACK_SHELL_INDEX g_dpackShellIndex = { (PVOID)dpackStart,0 };//顺便初始化壳oep
+	ULONGLONG g_orgOep;
 }
-#ifdef _WIN64
-ULONGLONG g_orgOep
-#else
-DWORD g_orgOep;
-#endif
 
+#ifndef _WIN64
 __declspec(naked) void BeforeUnpack()
+#else
+void BeforeUnpack()
+#endif
 {
 
 }
 
+#ifndef _WIN64
 __declspec(naked) void AfterUnpack()
+#else
+void AfterUnpack()
+#endif
 {
 
 }
 
-#ifdef _WIN32
+#ifndef _WIN64
 __declspec(naked) void JmpOrgOep()
 {
 	__asm
@@ -30,7 +34,11 @@ __declspec(naked) void JmpOrgOep()
 }
 #endif
 
+#ifdef _WIN64 
+void dpackStart()
+#else
 __declspec(naked) void dpackStart()//此函数中不要有局部变量
+#endif
 {
 
 	BeforeUnpack();

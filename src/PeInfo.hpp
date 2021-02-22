@@ -1,5 +1,5 @@
 /*
-	peinfo v0.3.2,
+	peinfo v0.5,
 	to inspect pe32/pe64 structure
 	designed by devseed,
 	https://github.com/YuriSizuku/SimpleDpack/
@@ -140,8 +140,8 @@ public:
 #ifdef _WIN64
 	DWORD va2rva(ULONGLONG va) const;
 	ULONGLONG rva2va(DWORD rva) const;
-	ULONGLONG faddr2va(faddr) const;
-	DWORD va2faddr(DWORD ULONGLONG) const;
+	ULONGLONG faddr2va(DWORD faddr) const;
+	DWORD va2faddr(ULONGLONG va) const;
 #else
 	DWORD va2rva(DWORD va) const;
 	DWORD rva2va(DWORD rva) const;

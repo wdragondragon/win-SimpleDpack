@@ -11,8 +11,14 @@ using namespace std;
 int main(int argc,char *argv[])
 {
 	cout<<"-----------------SimpleDpack ver0.4--------------------"<<endl;
+#ifdef _WIN64
+	cout << "A very simple windows EXE(64bit) packing tool, " << endl;
+	cout << "for learning or investigating PE64 structure. " << endl;
+#else
 	cout << "A very simple windows EXE packing tool, " << endl;
 	cout << "for learning or investigating PE structure. " << endl;
+#endif
+
 	cout << "designed by devseed" << endl;
 	cout<<"--useage:cmdline or drag the file on simpledpack.exe"<<endl;
 	cout<<"simpledpack inpath [outpath]"<<endl;

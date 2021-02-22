@@ -62,7 +62,7 @@ DWORD CPEedit::shiftReloc(LPBYTE pPeBuf, size_t oldImageBase, size_t newImageBas
 			// 新的重定位地址 = 重定位后的地址(VA)-加载时的镜像基址(hModule VA) + 新的镜像基址(VA) + 新代码基址RVA（前面用于存放压缩的代码）
 			// 由于讲dll附加在后面，需要在dll shell中的重定位加上偏移修正
 #ifdef _WIN64
-			*(ULONGLONG)(pPeBuf + toffset) += newImageBase - oldImageBase + offset; //重定向每一项地址
+			*(PULONGLONG)(pPeBuf + toffset) += newImageBase - oldImageBase + offset; //重定向每一项地址
 #else
 			//printf("%08lX -> ", *(PDWORD)(pPeBuf + toffset));
 			*(PDWORD)(pPeBuf + toffset) += newImageBase - oldImageBase + offset; //重定向每一项地址
