@@ -52,6 +52,7 @@ dpackType.c     // structures decleare
 * v0.2 rewrite some code and make it more clear,  merge the pe32 and pe64 structure
 * v0.3 refracts the class and code, removing useless code, to make it more easy to understand 
 * v0.3.1 make pack program workflow clean
+* v0.3.2  appendSection, savePe rewrite,  merge the shellcode and packed data into one section
 
 ## coming soon(maybe...):
 

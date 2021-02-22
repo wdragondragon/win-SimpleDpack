@@ -22,9 +22,9 @@ typedef struct _DPACK_TMPBUF_ENTRY
 {
 	LPBYTE PackedBuf;
 	DWORD  PackedSize;
-	DWORD  OrgRva;//若此项为0，则添加到最后一个区段
+	DWORD  OrgRva;//若此项为0，则添加到最后一个区段，不压缩
 	DWORD  OrgMemSize;
-}DPACK_TMPBUF_ENTRY, * PDPACK_TMPBUF_ENTRY;
+}DPACK_TMPBUF_ENTRY, * PDPACK_TMPBUF_ENTRY; // 最后一个放shellcode
 
 class CSimpleDpack
 {
@@ -42,16 +42,18 @@ protected:
 
 	WORD m_dpackSectNum; 
 	DPACK_TMPBUF_ENTRY m_dpackTmpbuf[MAX_DPACKSECTNUM]; // 加壳区段索引
+	bool m_packSectMap[MAX_DPACKSECTNUM]; // 区段是否被压缩map
 
 	WORD initDpackTmpbuf();//返回原来dpackTmpBuf数量
 	WORD addDpackTmpbufEntry (LPBYTE packBuf, DWORD packBufSize, DWORD srcRva = 0, DWORD OrgMemSize = 0);//增加dpack索引
 	DWORD packSection(int type=1);	//pack各区段
 	
 	DWORD loadShellDll(const char* dllpath);	//处理外壳, return dll size
-	void initShellIndex(DWORD shellSize);
+	void initShellIndex(DWORD shellEndRva); // 初始化全局变量
 	DWORD adjustShellReloc(DWORD shellBaseRva);// 设置dll重定位信息，返回个数
 	DWORD adjustShellIat(DWORD shellBaseRva);// 设置由偏移造成的dll iat错误
-	void adjustPackpeHeaders(); // 调整加上shellcode后的pe头信息
+	DWORD makeAppendBuf(DWORD shellStartRva, DWORD shellEndRva,  DWORD shellBaseRva); // 准备附加shellcode的buf
+	void adjustPackpeHeaders(DWORD offset); // 调整加上shellcode后的pe头信息
 
  public:
 	CSimpleDpack()
