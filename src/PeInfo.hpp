@@ -42,7 +42,7 @@ public:
 	static DWORD getOepRva(const char* path);
 	static DWORD getOepRva(LPBYTE pPeBuf);//·µ»ØRva
 	static WORD getSectionNum(LPBYTE pPeBuf);
-	static WORD findRvaSectIdx(LPBYTE pPeBuf, DWORD rva);
+	static int findRvaSectIdx(LPBYTE pPeBuf, DWORD rva);
 
 	static DWORD getPeMemSize(const char* path);
 	static DWORD getPeMemSize(LPBYTE pPeBuf);
@@ -132,7 +132,7 @@ public:
 	PIMAGE_EXPORT_DIRECTORY getExportDirectory();
 	DWORD getOepRva();
 	WORD getSectionNum();
-	WORD findRvaSectIdx(DWORD rva);
+	int findRvaSectIdx(DWORD rva);
 
 	// µØÖ·×ª»»
 	DWORD rva2faddr(DWORD rva) const;

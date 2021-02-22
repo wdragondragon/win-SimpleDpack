@@ -168,8 +168,9 @@ WORD CPEinfo::getSectionNum(LPBYTE pPeBuf)
 	return getFileHeader(pPeBuf)->NumberOfSections;
 }
 
-WORD CPEinfo::findRvaSectIdx(LPBYTE pPeBuf, DWORD rva)
+int CPEinfo::findRvaSectIdx(LPBYTE pPeBuf, DWORD rva)
 {
+	if (rva == 0) return -1;
 	auto pSecHeader = getSectionHeader(pPeBuf);
 	WORD n = getSectionNum(pPeBuf);
 	for (int i = 0; i < n -1; i++)
@@ -631,7 +632,7 @@ WORD  CPEinfo::getSectionNum()
 {
 	return getSectionNum(m_pPeBuf);
 }
-WORD  CPEinfo::findRvaSectIdx(DWORD rva)
+int  CPEinfo::findRvaSectIdx(DWORD rva)
 {
 	return findRvaSectIdx(m_pPeBuf, rva);
 }

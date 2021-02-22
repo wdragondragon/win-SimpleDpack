@@ -100,11 +100,20 @@ DWORD CSimpleDpack::packSection(int type)	//处理各区段
 
 	// 确定要压缩的区段
 	for (int i = 0; i < sectNum; i++) m_packSectMap[i] = true;
-	m_packSectMap[m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory() 
-		[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress)] = false; // rsrc
-	//m_packSectMap[0] = true;
-	//m_packSectMap[4] = false;
-
+	int sectIdx = -1;
+    sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
+		[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress);
+	if(sectIdx!=-1) m_packSectMap[sectIdx] = false; // rsrc
+	sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
+		[IMAGE_DIRECTORY_ENTRY_SECURITY].VirtualAddress);
+	if (sectIdx != -1) m_packSectMap[sectIdx] = false; // security
+	sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
+		[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
+	if (sectIdx != -1) m_packSectMap[sectIdx] = false; // tls
+	sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
+		[IMAGE_DIRECTORY_ENTRY_EXCEPTION].VirtualAddress);
+	if (sectIdx != -1) m_packSectMap[sectIdx] = false; // exception
+	
 	//pack各区段
 	m_dpackSectNum = 0;
 	for (int i = 0; i < sectNum; i++)

@@ -10,7 +10,7 @@ using namespace std;
 */
 int main(int argc,char *argv[])
 {
-	cout<<"-----------------SimpleDpack ver0.4--------------------"<<endl;
+	cout<<"-----------------SimpleDpack ver0.5--------------------"<<endl;
 #ifdef _WIN64
 	cout << "A very simple windows EXE(64bit) packing tool, " << endl;
 	cout << "for learning or investigating PE64 structure. " << endl;

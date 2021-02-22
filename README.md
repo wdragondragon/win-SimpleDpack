@@ -60,6 +60,7 @@ dpackType.c     // structures decleare
 
 * ~~pack multi sections (done)~~
 * ~~win64 pe (done)~~
+* improve the compatibility? 
 * ciphering and spagetti codes to make it hard to reverse (just for fine)
 * stolen oep codes
 * ...
