@@ -49,6 +49,7 @@ void MallocAll(PVOID arg)
 	HMODULE imagebase = GetModuleHandle(NULL);
 	for (int i = 0; i < g_dpackShellIndex.SectionNum; i++)
 	{
+		if (g_dpackShellIndex.SectionIndex[i].OrgRva == 0) continue;
 		LPBYTE tVa = (LPBYTE)imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva;
 		DWORD tSize = g_dpackShellIndex.SectionIndex[i].OrgSize;
 		VirtualQueryEx(hProcess, tVa, &mi, tSize);
@@ -78,34 +79,54 @@ void MallocAll(PVOID arg)
 
 void UnpackAll(PVOID arg)
 {
-	int i;
-	DWORD res;
 	DWORD oldProtect;
-	LPBYTE buf;
 #ifdef _WIN64
 	ULONGLONG imagebase = g_dpackShellIndex.OrgIndex.ImageBase;
 #else
 	DWORD imagebase = g_dpackShellIndex.OrgIndex.ImageBase;
 #endif
-	for(i=0; i<g_dpackShellIndex.SectionNum; i++)
+	for(int i=0; i<g_dpackShellIndex.SectionNum; i++)
 	{
-		buf = new BYTE[g_dpackShellIndex.SectionIndex[i].OrgRva];
-		res = dlzmaUnpack(buf, (LPBYTE)(g_dpackShellIndex.SectionIndex[i].PackedRva + imagebase),
-			g_dpackShellIndex.SectionIndex[i].PackedSize);
-		if(res==0) 
+		switch(g_dpackShellIndex.SectionIndex[i].DpackSectionType)
 		{
-			MessageBox(0,"unpack failed","error",0);
-			ExitProcess(1);
+		case  DPACK_SECTION_RAW:
+		{
+			if (g_dpackShellIndex.SectionIndex[i].OrgSize == 0) continue;
+			VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+				g_dpackShellIndex.SectionIndex[i].OrgSize,
+				PAGE_EXECUTE_READWRITE, &oldProtect);
+			memcpy((void*)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+				(void*)(imagebase + g_dpackShellIndex.SectionIndex[i].DpackRva),
+				g_dpackShellIndex.SectionIndex[i].OrgSize);
+			VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+				g_dpackShellIndex.SectionIndex[i].OrgSize,
+				oldProtect, &oldProtect);
+			break;
 		}
-		VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
-						g_dpackShellIndex.SectionIndex[i].OrgSize,
-						PAGE_EXECUTE_READWRITE ,&oldProtect);
-		memcpy((void *)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
-				buf,g_dpackShellIndex.SectionIndex[i].OrgSize);
-		VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
-			            g_dpackShellIndex.SectionIndex[i].OrgSize,
-			            oldProtect, &oldProtect);
-		delete[] buf;
+		case DPACK_SECTION_DLZMA:
+		{
+			LPBYTE buf = new BYTE[g_dpackShellIndex.SectionIndex[i].OrgSize];
+			if (!dlzmaUnpack(buf, 
+				(LPBYTE)(g_dpackShellIndex.SectionIndex[i].DpackRva + imagebase),
+				g_dpackShellIndex.SectionIndex[i].DpackSize))
+			{
+				MessageBox(0, "unpack failed", "error", 0);
+				ExitProcess(1);
+			}
+			VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+				g_dpackShellIndex.SectionIndex[i].OrgSize,
+				PAGE_EXECUTE_READWRITE, &oldProtect);
+			memcpy((void*)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+				buf, g_dpackShellIndex.SectionIndex[i].OrgSize);
+			VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+				g_dpackShellIndex.SectionIndex[i].OrgSize,
+				oldProtect, &oldProtect);
+			delete[] buf;
+			break;
+		}
+		default:
+			break;
+		}
 	}
 }
 
@@ -156,12 +177,17 @@ void LoadOrigionIat(PVOID arg)  // 因为将iat改为了壳的，所以要还原原来的iat
 			}
 			else
 			{
-				//如果此参数是一个序数值，它必须在一个字的底字节，高字节必须为0。
+				//如果此参数是一个序数值，它必须在一个字的低字节，高字节必须为0。
 #ifdef _WIN64			
 				tVa = (ULONGLONG)GetProcAddress(tHomule,(LPCSTR)(poThunk[j].u1.Ordinal & 0x0000ffff));
 #else
 				tVa = (DWORD)GetProcAddress(tHomule, (LPCSTR)(poThunk[j].u1.Ordinal & 0x0000ffff));
 #endif
+			}
+			if (tVa == NULL)
+			{
+				MessageBox(NULL, "IAT load error!", "error", NULL);
+				ExitProcess(1);
 			}
 			pfThunk[j].u1.Function = tVa;//注意间接寻址
 		}

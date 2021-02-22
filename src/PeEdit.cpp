@@ -76,7 +76,7 @@ DWORD CPEedit::shiftReloc(LPBYTE pPeBuf, size_t oldImageBase, size_t newImageBas
 	return all_num;
 }
 
-DWORD CPEedit::shiftOft(LPBYTE pPeBuf, DWORD offset, bool bMemAlign)
+DWORD CPEedit::shiftOft(LPBYTE pPeBuf, DWORD offset, bool bMemAlign, bool bResetFt)
 {
 	auto pImportEntry = &getImageDataDirectory(pPeBuf)[IMAGE_DIRECTORY_ENTRY_IMPORT];
 	DWORD dll_num = pImportEntry->Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);//导入dll的个数,含最后全为空的一项
@@ -101,7 +101,7 @@ DWORD CPEedit::shiftOft(LPBYTE pPeBuf, DWORD offset, bool bMemAlign)
 		}
 		pImportDescriptor[i].OriginalFirstThunk += offset;
 		pImportDescriptor[i].Name += offset;
-		pImportDescriptor[i].FirstThunk += offset;
+		if(bResetFt) pImportDescriptor[i].FirstThunk =  pImportDescriptor[i].OriginalFirstThunk;
 		func_num += item_num;
 	}
 	return func_num;
@@ -155,7 +155,8 @@ DWORD CPEedit::appendSection(LPBYTE pPeBuf, IMAGE_SECTION_HEADER newSectHeader,
 		// 修改前一个区段VitrualSize使得内存上没有空隙
 		pSectHeader[oldSectNum - 1].Misc.VirtualSize +=
 			(newSectHeader.VirtualAddress - 
-				pSectHeader[oldSectNum - 1].VirtualAddress - pSectHeader[oldSectNum - 1].Misc.VirtualSize) / memAlign * memAlign;
+				pSectHeader[oldSectNum - 1].VirtualAddress - 
+				pSectHeader[oldSectNum - 1].Misc.VirtualSize) / memAlign * memAlign;
 	}
 
 	// 添加新区段头
@@ -176,14 +177,13 @@ DWORD CPEedit::appendSection(LPBYTE pPeBuf, IMAGE_SECTION_HEADER newSectHeader,
 		toAlign(newSectSize, fileAlign);
 }
 
-DWORD CPEedit::removeSectionHeaders(LPBYTE pPeBuf, int removeNum, int removeIdx[])
+DWORD CPEedit::removeSectionDatas(LPBYTE pPeBuf, int removeNum, int removeIdx[])
 {
 	WORD oldSectNum = getFileHeader(pPeBuf)->NumberOfSections;
 	auto pOptHeader = getOptionalHeader(pPeBuf);
 	auto pSectHeader = getSectionHeader(pPeBuf);
-	DWORD decreseMemSize = 0;
+	DWORD decreseRawSize = 0;
 
-	PIMAGE_SECTION_HEADER pTmpSectHeader = new IMAGE_SECTION_HEADER[oldSectNum];
 	for (int i = 0; i < removeNum; i++) // 排序
 	{
 		for (int j = i + 1; j < removeNum; j++)
@@ -200,27 +200,15 @@ DWORD CPEedit::removeSectionHeaders(LPBYTE pPeBuf, int removeNum, int removeIdx[
 	int j = 0;
 	for (int i = 0; i < oldSectNum; i++)
 	{
-		if (tmpidx > removeNum - 1 || i < removeIdx[tmpidx]) // 保留的区段
-		{
-			memcpy(&pSectHeader[i], &pTmpSectHeader[j++], sizeof(IMAGE_SECTION_HEADER));
-		}	
-		else //移除的区段
-		{
-			decreseMemSize += pSectHeader[i].Misc.VirtualSize;
-			tmpidx++;
-		}
-			
+		if (tmpidx > removeNum - 1 || i < removeIdx[tmpidx]) continue; // 保留的区段
+        //移除的区段
+		decreseRawSize += pSectHeader[i].SizeOfRawData;
+		pSectHeader[i].SizeOfRawData = 0;
+		if (i < oldSectNum - 1) 	
+			pSectHeader[i + 1].PointerToRawData = pSectHeader[i].PointerToRawData;
+		tmpidx++;
 	}
-	memset(pSectHeader, oldSectNum, 0);
-	memcpy(pSectHeader, pTmpSectHeader, 
-		(oldSectNum - removeNum) * sizeof(IMAGE_SECTION_HEADER));
-
-	// 修正pe头
-	getFileHeader(pPeBuf)->NumberOfSections -= removeNum;
-	pOptHeader->SizeOfHeaders -= removeNum * sizeof(IMAGE_SECTION_HEADER);
-	pOptHeader->SizeOfImage -= decreseMemSize;
-	delete[] pTmpSectHeader;
-	return oldSectNum - removeNum;
+	return decreseRawSize;
 }
 
 DWORD CPEedit::savePeFile(const char* path,
@@ -292,9 +280,9 @@ DWORD  CPEedit::shiftReloc(size_t oldImageBase, size_t newImageBase, DWORD offse
 	return shiftReloc(m_pPeBuf, oldImageBase, newImageBase, offset, m_bMemAlign);
 }
 
-DWORD  CPEedit::shiftOft(DWORD offset)
+DWORD  CPEedit::shiftOft(DWORD offset, bool bResetFt)
 {
-	return shiftOft(m_pPeBuf, offset, m_bMemAlign);
+	return shiftOft(m_pPeBuf, offset, m_bMemAlign, bResetFt);
 }
 
 DWORD CPEedit::appendSection(IMAGE_SECTION_HEADER newSectHeader,LPBYTE pSectBuf, DWORD newSectSize)
@@ -322,9 +310,9 @@ DWORD CPEedit::appendSection(IMAGE_SECTION_HEADER newSectHeader,LPBYTE pSectBuf,
 	return appendSection(m_pPeBuf, newSectHeader, pSectBuf, newSectSize, m_bMemAlign);
 }
 
-DWORD CPEedit::removeSectionHeaders(int removeNum, int removeIdx[])
+DWORD CPEedit::removeSectionDatas(int removeNum, int removeIdx[])
 {
-	return removeSectionHeaders(m_pPeBuf, removeNum, removeIdx);
+	return removeSectionDatas(m_pPeBuf, removeNum, removeIdx);
 }
 
 DWORD CPEedit::savePeFile(const char* path, bool bShrinkPe)

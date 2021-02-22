@@ -1,24 +1,43 @@
 
 #include "SimpleDpack.hpp"
 #include "lzma\lzmalib.h"
+#include <iostream>
 
 /*static functions*/
-DWORD CSimpleDpack::dlzmaPack(LPBYTE* dst, LPBYTE src, DWORD lzmasize, double maxmul)
+LPBYTE CSimpleDpack::dlzmaPack(LPBYTE pSrcBuf, size_t srcSize, size_t *pDstSize, double maxmul)
 {
-	if (src == NULL) return 0;
+	if (pSrcBuf == NULL) return 0;
+	LPBYTE pDstBuf = NULL;
+	size_t dstSize = 0;
 	for (double m = 1; m <= maxmul; m += 0.1)
 	{
-		if (*dst != NULL)
-		{
-			delete[] dst;
-			lzmasize = (DWORD)(m * (double)lzmasize);//防止分配缓存区空间过小
-		}
-		*dst = new BYTE[lzmasize];
-		DWORD res = ::dlzmaPack(*dst, src, lzmasize);
-		if (res > 0) return res;
+	    pDstBuf = new BYTE[(size_t)(m * (double)srcSize)
+			                + sizeof(DLZMA_HEADER)]; //防止分配缓存区空间过小
+		dstSize = ::dlzmaPack(pDstBuf, pSrcBuf, srcSize); // 此处要特别注意，缓存区尺寸
+		if (dstSize > 0) break;
+		delete[] pDstBuf;
 	}
-	return 0;
+	if (pDstSize != NULL) *pDstSize = dstSize;
+	if (dstSize == 0)
+	{
+		delete[] pDstBuf;
+		pDstBuf = NULL;
+	}
+	return pDstBuf;
 }
+
+LPBYTE CSimpleDpack::dlzmaUnpack(LPBYTE pSrcBuf, size_t srcSize)
+{
+	if (pSrcBuf == NULL) return 0;
+	LPBYTE pDstBuf = NULL;
+	auto pDlzmaHeader = (PDLZMA_HEADER)(pSrcBuf);
+	size_t dstSize = pDlzmaHeader->RawDataSize;
+	pDstBuf = new BYTE[dstSize]; //防止分配缓存区空间过小
+	::dlzmaUnpack(pDstBuf, pSrcBuf, srcSize); // 此处要特别注意，缓存区尺寸
+	return pDstBuf;
+}
+
+
 /*static functions end*/
 
 /*Constructor*/
@@ -53,7 +72,7 @@ WORD CSimpleDpack::initDpackTmpbuf()
 	if (m_dpackSectNum != 0)
 	{
 		for (int i = 0; i < m_dpackSectNum; i++)
-			if (m_dpackTmpbuf[i].PackedBuf != NULL && m_dpackTmpbuf[i].PackedSize != 0)
+			if (m_dpackTmpbuf[i].PackedBuf != NULL && m_dpackTmpbuf[i].DpackSize != 0)
 				delete[] m_dpackTmpbuf[i].PackedBuf;
 	}
 	m_dpackSectNum = 0;
@@ -61,33 +80,52 @@ WORD CSimpleDpack::initDpackTmpbuf()
 	return oldDpackSectNum;
 }
 
-WORD CSimpleDpack::addDpackTmpbufEntry(LPBYTE PackedBuf, DWORD PackedSize, DWORD OrgRva, DWORD OrgMemSize)
+WORD CSimpleDpack::addDpackTmpbufEntry(LPBYTE packBuf, DWORD packBufSize,
+	DWORD srcRva, DWORD OrgMemSize, DWORD Characteristics)
 {
-	m_dpackTmpbuf[m_dpackSectNum].PackedBuf = PackedBuf;
-	m_dpackTmpbuf[m_dpackSectNum].PackedSize = PackedSize;
-	m_dpackTmpbuf[m_dpackSectNum].OrgRva = OrgRva;
+	m_dpackTmpbuf[m_dpackSectNum].PackedBuf = packBuf;
+	m_dpackTmpbuf[m_dpackSectNum].DpackSize = packBufSize;
+	m_dpackTmpbuf[m_dpackSectNum].OrgRva = srcRva;
 	m_dpackTmpbuf[m_dpackSectNum].OrgMemSize = OrgMemSize;
+	m_dpackTmpbuf[m_dpackSectNum].Characteristics = Characteristics;
 	m_dpackSectNum++;
 	return m_dpackSectNum;
 }
 
 DWORD CSimpleDpack::packSection(int type)	//处理各区段
 {
-	LPBYTE dstBuf = NULL;
 	DWORD allsize = 0;
+	WORD sectNum = m_packpe.getSectionNum();
+	auto pSectHeader = m_packpe.getSectionHeader();
 
-	//pack各区段,暂时只压缩代码段
+	// 确定要压缩的区段
+	for (int i = 0; i < sectNum; i++) m_packSectMap[i] = true;
+	m_packSectMap[m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory() 
+		[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress)] = false; // rsrc
+	//m_packSectMap[0] = true;
+	//m_packSectMap[4] = false;
+
+	//pack各区段
 	m_dpackSectNum = 0;
-	DWORD srcrva = m_packpe.getOptionalHeader()->BaseOfCode;//获取code段rva
-	m_packSectMap[m_packpe.findRvaSectIdx(srcrva)] = True;
-	LPBYTE srcBuf = m_packpe.getPeBuf() + srcrva;//指向缓存区
-	DWORD srcsize = m_packpe.getOptionalHeader()->SizeOfCode
-		+ sizeof(DLZMA_HEADER);//压缩大小
-	DWORD dstsize = dlzmaPack(&dstBuf, srcBuf, srcsize);//压缩
-	if (dstsize == 0) return 0;
-	addDpackTmpbufEntry(dstBuf, dstsize, srcrva, srcsize);
-	allsize = dstsize;
-	
+	for (int i = 0; i < sectNum; i++)
+	{
+		if (m_packSectMap[i] == false) continue;
+		DWORD sectStartOffset = m_packpe.isMemAlign() ?
+			pSectHeader[i].VirtualAddress : pSectHeader[i].PointerToRawData;
+		LPBYTE pSrcBuf = m_packpe.getPeBuf() + sectStartOffset;//指向缓存区
+		DWORD srcSize = pSectHeader[i].Misc.VirtualSize; // 压缩大小
+		size_t packedSize = 0;
+		LPBYTE pPackedtBuf = dlzmaPack(pSrcBuf, srcSize, &packedSize);// 压缩区段
+		if (packedSize == 0)
+		{
+			std::cout << "error: dlzmaPack failed in section " << i<< std::endl;
+			return 0;
+		}
+		addDpackTmpbufEntry(pPackedtBuf, packedSize + sizeof(DLZMA_HEADER), // 注意加上DLZMA头
+			pSectHeader[i].VirtualAddress, pSectHeader[i].Misc.VirtualSize,
+			pSectHeader[i].Characteristics);
+		allsize += packedSize;
+	}
 	return allsize;
 }
 
@@ -130,9 +168,11 @@ void CSimpleDpack::initShellIndex(DWORD shellEndRva)
 	{
 		m_pShellIndex->SectionIndex[i].OrgRva = m_dpackTmpbuf[i].OrgRva;
 		m_pShellIndex->SectionIndex[i].OrgSize = m_dpackTmpbuf[i].OrgMemSize;
-		m_pShellIndex->SectionIndex[i].PackedRva = trva;
-		m_pShellIndex->SectionIndex[i].PackedSize = m_dpackTmpbuf[i].PackedSize;
-		trva += CPEinfo::toAlign(m_dpackTmpbuf[i].PackedSize, m_packpe.getOptionalHeader()->SectionAlignment);
+		m_pShellIndex->SectionIndex[i].DpackRva = trva;
+		m_pShellIndex->SectionIndex[i].DpackSize = m_dpackTmpbuf[i].DpackSize;
+		m_pShellIndex->SectionIndex[i].DpackSectionType = DPACK_SECTION_DLZMA;
+		m_pShellIndex->SectionIndex[i].Characteristics = m_dpackTmpbuf[i].Characteristics;
+		trva += m_dpackTmpbuf[i].DpackSize;
 	}
 	m_pShellIndex->SectionNum = m_dpackSectNum;
 }
@@ -177,12 +217,12 @@ void CSimpleDpack::adjustPackpeHeaders(DWORD offset)
 	// m_pShellIndex->DpackOepFunc 之前已经reloc过了，变成了正确的va了(shelldll是release版)
 	m_packpe.setOepRva((size_t)m_pShellIndex->DpackOepFunc -
 		m_packpe.getOptionalHeader()->ImageBase + offset);
-	m_packpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC] = {
-		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress + packpeImageSize + offset,
-		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size };
 	m_packpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT] = {
 		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress + packpeImageSize + offset,
 		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].Size };
+	m_packpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IAT] = {
+		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress + packpeImageSize + offset,
+		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].Size};
 	m_packpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC] = { 0,0 };
 
 	// pe 属性设置
@@ -235,21 +275,29 @@ DWORD CSimpleDpack::savePe(const char* path)//失败返回0，成功返回文件大小
 	dpackSect.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_EXECUTE;
 	dpackSect.VirtualAddress = m_dpackTmpbuf[m_dpackSectNum - 1].OrgRva;
 	
-	// dpack buf
+	// 准备dpack buf
 	DWORD dpackBufSize = 0;
-	for (int i = 0; i < m_dpackSectNum; i++) dpackBufSize += m_dpackTmpbuf[i].PackedSize;
+	for (int i = 0; i < m_dpackSectNum; i++) dpackBufSize += m_dpackTmpbuf[i].DpackSize;
 	LPBYTE pdpackBuf = new BYTE[dpackBufSize];
 	LPBYTE pCurBuf = pdpackBuf;
 	memcpy(pdpackBuf, m_dpackTmpbuf[m_dpackSectNum - 1].PackedBuf, 
-		m_dpackTmpbuf[m_dpackSectNum - 1].PackedSize); // 壳代码
-	pCurBuf += m_dpackTmpbuf[m_dpackSectNum - 1].PackedSize;
+		m_dpackTmpbuf[m_dpackSectNum - 1].DpackSize); // 壳代码
+	pCurBuf += m_dpackTmpbuf[m_dpackSectNum - 1].DpackSize;
 	for (int i = 0; i < m_dpackSectNum -1 ; i++)
 	{
 		memcpy(pCurBuf, m_dpackTmpbuf[i].PackedBuf,
-			m_dpackTmpbuf[i].PackedSize); // 壳代码
-		pCurBuf += m_dpackTmpbuf[i].PackedSize;
+			m_dpackTmpbuf[i].DpackSize); // 壳代码
+		pCurBuf += m_dpackTmpbuf[i].DpackSize;
 	}
-	// 写入pe
+
+	// 删除被压缩区段和写入pe
+	int remvoeSectIdx[MAX_DPACKSECTNUM] = {0};
+	int removeSectNum = 0;
+	for (int i = 0; i < m_packpe.getFileHeader()->NumberOfSections; i++)
+	{
+		if (m_packSectMap[i] == true) remvoeSectIdx[removeSectNum++] = i;
+	}
+	m_packpe.removeSectionDatas(removeSectNum, remvoeSectIdx);
 	m_packpe.appendSection(dpackSect, pdpackBuf, dpackBufSize);
 	delete[] pdpackBuf;
 	return m_packpe.savePeFile(path);

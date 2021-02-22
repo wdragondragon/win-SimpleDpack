@@ -5,12 +5,12 @@
 using namespace std;
 #ifndef _DEBUGTRY
 /*
-	SimpleDpack console ver0.3.2 Console
+	SimpleDpack console ver0.4 Console
 	simpledpack inpath [outpath]
 */
 int main(int argc,char *argv[])
 {
-	cout<<"-----------------SimpleDpack ver0.3.2--------------------"<<endl;
+	cout<<"-----------------SimpleDpack ver0.4--------------------"<<endl;
 	cout << "A very simple windows EXE packing tool, " << endl;
 	cout << "for learning or investigating PE structure. " << endl;
 	cout << "designed by devseed" << endl;

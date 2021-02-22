@@ -1,5 +1,5 @@
 /*
-	SimpleDpack v0.3.1 ,
+	SimpleDpack v0.4 ,
 	to pack the pe32/pe64 pe file
 	designed by devseed,
 	https://github.com/YuriSizuku/SimpleDpack/
@@ -21,15 +21,18 @@ extern "C" // c++中引用c必须要这样
 typedef struct _DPACK_TMPBUF_ENTRY
 {
 	LPBYTE PackedBuf;
-	DWORD  PackedSize;
+	DWORD  DpackSize;
 	DWORD  OrgRva;//若此项为0，则添加到最后一个区段，不压缩
 	DWORD  OrgMemSize;
+	DWORD  Characteristics;
 }DPACK_TMPBUF_ENTRY, * PDPACK_TMPBUF_ENTRY; // 最后一个放shellcode
 
 class CSimpleDpack
 {
 public:
-	static DWORD dlzmaPack(LPBYTE* dst, LPBYTE src, DWORD lzmasize, double maxmul = 2.0); // 加壳lzma压缩算法
+	static LPBYTE dlzmaPack(LPBYTE pSrcBuf, size_t srcSize, 
+		size_t* pDstSize, double maxmul = 2.0); // 加壳lzma压缩算法
+	static LPBYTE dlzmaUnpack(LPBYTE pSrcBuf, size_t srcSize); // lzma解压算法
 
 private:
 	char m_strFilePath[MAX_PATH];
@@ -45,7 +48,8 @@ protected:
 	bool m_packSectMap[MAX_DPACKSECTNUM]; // 区段是否被压缩map
 
 	WORD initDpackTmpbuf();//返回原来dpackTmpBuf数量
-	WORD addDpackTmpbufEntry (LPBYTE packBuf, DWORD packBufSize, DWORD srcRva = 0, DWORD OrgMemSize = 0);//增加dpack索引
+	WORD addDpackTmpbufEntry (LPBYTE packBuf, DWORD packBufSize,
+		DWORD srcRva = 0, DWORD OrgMemSize = 0, DWORD Characteristics= 0xE0000000);//增加dpack索引
 	DWORD packSection(int type=1);	//pack各区段
 	
 	DWORD loadShellDll(const char* dllpath);	//处理外壳, return dll size

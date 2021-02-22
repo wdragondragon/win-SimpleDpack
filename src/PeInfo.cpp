@@ -177,7 +177,8 @@ WORD CPEinfo::findRvaSectIdx(LPBYTE pPeBuf, DWORD rva)
 		if (pSecHeader[i].VirtualAddress <= rva
 			&& pSecHeader[i+1].VirtualAddress > rva) return i;
 	}
-	return -1;
+	if (pSecHeader[n - 1].VirtualAddress <= rva) return n - 1;
+	else return -1;
 }
 
 DWORD CPEinfo::getPeMemSize(const char* path)

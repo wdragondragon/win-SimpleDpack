@@ -1,3 +1,10 @@
+/*
+	simpledpackshell v0.4 ,
+	The shellcode type declear, such as DPACK_SHELL_INDEX 
+	designed by devseed,
+	https://github.com/YuriSizuku/SimpleDpack/
+*/
+
 #include <Windows.h>
 #ifndef _DPACKPROC_H
 #define _DPACKPROC_H
@@ -6,10 +13,10 @@
 
 typedef struct _DLZMA_HEADER
 {
-	DWORD RawDataSize;//原始数据尺寸(不含此头)
-	DWORD DataSize;//压缩后的数据大小
+	size_t RawDataSize;//原始数据尺寸(不含此头)
+	size_t DataSize;//压缩后的数据大小
 	char LzmaProps[LZMA_PROPS_SIZE];//原始lzma的文件头
-}DLZMA_HEADER, * PDLZMA_HEADER;//此处外围添加适用于dpack的lzma头
+}DLZMA_HEADER, *PDLZMA_HEADER;//此处外围添加适用于dpack的lzma头
 
 typedef struct _DPACK_ORGPE_INDEX   //源程序被隐去的信息，此结构为明文表示，地址全是rva
 {
@@ -23,14 +30,18 @@ typedef struct _DPACK_ORGPE_INDEX   //源程序被隐去的信息，此结构为明文表示，地址
 	DWORD ImportSize;
 }DPACK_ORGPE_INDEX, * PDPACK_ORGPE_INDEX;
 
+#define DPACK_SECTION_RAW 0
+#define DPACK_SECTION_DLZMA 1
+
 typedef struct _DPACK_SECTION_ENTRY //源信息与压缩变换后信息索引表是
 {
 	//假设不超过4g
-	DWORD OrgRva;
-	DWORD OrgSize;
-	DWORD PackedRva;
-	DWORD PackedSize;
+	DWORD OrgRva; // OrgRva为0时则是不解压到原来区段
+	DWORD OrgSize; 
+	DWORD DpackRva;
+	DWORD DpackSize; 
 	DWORD Characteristics;
+	DWORD DpackSectionType; // dpack区段类型
 }DPACK_SECTION_ENTRY, * PDPACK_SECTION_ENTRY;
 
 typedef struct _DPACK_SHELL_INDEX//DPACK变换头
@@ -46,6 +57,6 @@ typedef struct _DPACK_SHELL_INDEX//DPACK变换头
 	PVOID Extra;									//其他信息，方便之后拓展
 }DPACK_SHELL_INDEX, * PDPACK_SHELL_INDEX;
 
-DWORD dlzmaPack(LPBYTE dst,LPBYTE src,DWORD size);
-DWORD dlzmaUnpack(LPBYTE dst, LPBYTE src, DWORD size);
+size_t dlzmaPack(LPBYTE pDstBuf, LPBYTE pSrcBuf, size_t srcSize);
+size_t dlzmaUnpack(LPBYTE pDstBuf, LPBYTE pSrcBuf, size_t srcSize);
 #endif

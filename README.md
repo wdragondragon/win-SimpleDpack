@@ -53,6 +53,7 @@ dpackType.c     // structures decleare
 * v0.3 refracts the class and code, removing useless code, to make it more easy to understand 
 * v0.3.1 make pack program workflow clean
 * v0.3.2  appendSection, savePe rewrite,  merge the shellcode and packed data into one section
+* v0.4 multi section (except rsrc) pack finished!
 
 ## coming soon(maybe...):
 
