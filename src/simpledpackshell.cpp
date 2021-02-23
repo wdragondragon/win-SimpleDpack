@@ -57,7 +57,7 @@ void MallocAll(PVOID arg)
 	HMODULE imagebase = GetModuleHandle(NULL);
 	for (int i = 0; i < g_dpackShellIndex.SectionNum; i++)
 	{
-		if (g_dpackShellIndex.SectionIndex[i].OrgRva == 0) continue;
+		if (g_dpackShellIndex.SectionIndex[i].OrgSize == 0) continue;
 		LPBYTE tVa = (LPBYTE)imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva;
 		DWORD tSize = g_dpackShellIndex.SectionIndex[i].OrgSize;
 		VirtualQueryEx(hProcess, tVa, &mi, tSize);

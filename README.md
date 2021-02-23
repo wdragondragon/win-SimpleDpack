@@ -60,7 +60,5 @@ dpackType.c     // structures decleare
 
 * ~~pack multi sections (done)~~
 * ~~win64 pe (done)~~
-* improve the compatibility? 
-* ciphering and spagetti codes to make it hard to reverse (just for fine)
-* stolen oep codes
+* improve the compatibility ? (I don't know why some of the x64 exe can not start after changing OEP...) 
 * ...

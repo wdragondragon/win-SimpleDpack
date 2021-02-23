@@ -36,8 +36,6 @@ LPBYTE CSimpleDpack::dlzmaUnpack(LPBYTE pSrcBuf, size_t srcSize)
 	::dlzmaUnpack(pDstBuf, pSrcBuf, srcSize); // 此处要特别注意，缓存区尺寸
 	return pDstBuf;
 }
-
-
 /*static functions end*/
 
 /*Constructor*/
@@ -92,50 +90,60 @@ WORD CSimpleDpack::addDpackTmpbufEntry(LPBYTE packBuf, DWORD packBufSize,
 	return m_dpackSectNum;
 }
 
-DWORD CSimpleDpack::packSection(int type)	//处理各区段
+DWORD CSimpleDpack::packSection(int dpackSectionType)	//处理各区段
 {
-	DWORD allsize = 0;
-	WORD sectNum = m_packpe.getSectionNum();
-	auto pSectHeader = m_packpe.getSectionHeader();
-
-	// 确定要压缩的区段
-	for (int i = 0; i < sectNum; i++) m_packSectMap[i] = true;
-	int sectIdx = -1;
-    sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
-		[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress);
-	if(sectIdx!=-1) m_packSectMap[sectIdx] = false; // rsrc
-	sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
-		[IMAGE_DIRECTORY_ENTRY_SECURITY].VirtualAddress);
-	if (sectIdx != -1) m_packSectMap[sectIdx] = false; // security
-	sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
-		[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
-	if (sectIdx != -1) m_packSectMap[sectIdx] = false; // tls
-	sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
-		[IMAGE_DIRECTORY_ENTRY_EXCEPTION].VirtualAddress);
-	if (sectIdx != -1) m_packSectMap[sectIdx] = false; // exception
-	
-	//pack各区段
-	m_dpackSectNum = 0;
-	for (int i = 0; i < sectNum; i++)
+	switch (dpackSectionType)
 	{
-		if (m_packSectMap[i] == false) continue;
-		DWORD sectStartOffset = m_packpe.isMemAlign() ?
-			pSectHeader[i].VirtualAddress : pSectHeader[i].PointerToRawData;
-		LPBYTE pSrcBuf = m_packpe.getPeBuf() + sectStartOffset;//指向缓存区
-		DWORD srcSize = pSectHeader[i].Misc.VirtualSize; // 压缩大小
-		size_t packedSize = 0;
-		LPBYTE pPackedtBuf = dlzmaPack(pSrcBuf, srcSize, &packedSize);// 压缩区段
-		if (packedSize == 0)
-		{
-			std::cout << "error: dlzmaPack failed in section " << i<< std::endl;
-			return 0;
-		}
-		addDpackTmpbufEntry(pPackedtBuf, packedSize + sizeof(DLZMA_HEADER), // 注意加上DLZMA头
-			pSectHeader[i].VirtualAddress, pSectHeader[i].Misc.VirtualSize,
-			pSectHeader[i].Characteristics);
-		allsize += packedSize;
+	case DPACK_SECTION_RAW:
+	{
+		return 0;
 	}
-	return allsize;
+	case DPACK_SECTION_DLZMA:
+	{
+		DWORD allsize = 0;
+		WORD sectNum = m_packpe.getSectionNum();
+		auto pSectHeader = m_packpe.getSectionHeader();
+
+		// 确定要压缩的区段
+		for (int i = 0; i < sectNum; i++) m_packSectMap[i] = true;
+		int sectIdx = -1;
+		sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
+			[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress);
+		if (sectIdx != -1) m_packSectMap[sectIdx] = false; // rsrc
+		sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
+			[IMAGE_DIRECTORY_ENTRY_SECURITY].VirtualAddress);
+		if (sectIdx != -1) m_packSectMap[sectIdx] = false; // security
+		sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
+			[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
+		if (sectIdx != -1) m_packSectMap[sectIdx] = false; // tls
+		sectIdx = m_packpe.findRvaSectIdx(m_packpe.getImageDataDirectory()
+			[IMAGE_DIRECTORY_ENTRY_EXCEPTION].VirtualAddress);
+		if (sectIdx != -1) m_packSectMap[sectIdx] = false; // exception
+
+		//pack各区段
+		m_dpackSectNum = 0;
+		for (int i = 0; i < sectNum; i++)
+		{
+			if (m_packSectMap[i] == false) continue;
+			DWORD sectStartOffset = m_packpe.isMemAlign() ?
+				pSectHeader[i].VirtualAddress : pSectHeader[i].PointerToRawData;
+			LPBYTE pSrcBuf = m_packpe.getPeBuf() + sectStartOffset;//指向缓存区
+			DWORD srcSize = pSectHeader[i].Misc.VirtualSize; // 压缩大小
+			size_t packedSize = 0;
+			LPBYTE pPackedtBuf = dlzmaPack(pSrcBuf, srcSize, &packedSize);// 压缩区段
+			if (packedSize == 0)
+			{
+				std::cout << "error: dlzmaPack failed in section " << i << std::endl;
+				return 0;
+			}
+			addDpackTmpbufEntry(pPackedtBuf, packedSize + sizeof(DLZMA_HEADER), // 注意加上DLZMA头
+				pSectHeader[i].VirtualAddress, pSectHeader[i].Misc.VirtualSize,
+				pSectHeader[i].Characteristics);
+			allsize += packedSize;
+		}
+		return allsize;
+	}
+	}
 }
 
 DWORD CSimpleDpack::loadShellDll(const char* dllpath)	//处理外壳,若其他操作系统要重写
@@ -247,11 +255,11 @@ DWORD CSimpleDpack::loadPeFile(const char* path)//加载pe文件，返回isPE()值
 	return res;
 }
 
-DWORD CSimpleDpack::packPe(const char* dllpath, int type)//加壳，失败返回0，成功返回pack数据大小
+DWORD CSimpleDpack::packPe(const char* dllpath, int dpackSectionType)//加壳，失败返回0，成功返回pack数据大小
 {
 	if (m_packpe.getPeBuf() == NULL) return 0;
 	initDpackTmpbuf(); // 初始化pack buf
-	DWORD packsize = packSection(type); // pack各区段
+	DWORD packsize = packSection(dpackSectionType); // pack各区段
 	DWORD shellsize = loadShellDll(dllpath); // 载入dll shellcode
 	
 	DWORD packpeImgSize = m_packpe.getOptionalHeader()->SizeOfImage;

@@ -50,7 +50,7 @@ protected:
 	WORD initDpackTmpbuf();//返回原来dpackTmpBuf数量
 	WORD addDpackTmpbufEntry (LPBYTE packBuf, DWORD packBufSize,
 		DWORD srcRva = 0, DWORD OrgMemSize = 0, DWORD Characteristics= 0xE0000000);//增加dpack索引
-	DWORD packSection(int type=1);	//pack各区段
+	DWORD packSection(int type=DPACK_SECTION_DLZMA);	//pack各区段
 	
 	DWORD loadShellDll(const char* dllpath);	//处理外壳, return dll size
 	void initShellIndex(DWORD shellEndRva); // 初始化全局变量
@@ -73,7 +73,7 @@ protected:
 	virtual	void release();
 		
 	DWORD loadPeFile(const char *path); //加载pe文件，返回isPE()值
-	DWORD packPe(const char *dllpath, int type=0); // 加壳，失败返回0，成功返回pack数据大小
+	DWORD packPe(const char *dllpath, int type=DPACK_SECTION_DLZMA); // 加壳，失败返回0，成功返回pack数据大小
 	DWORD unpackPe(int type=0); // 脱壳，其他同上（暂时不实现）
 	DWORD savePe(const char *path); // 失败返回0，成功返回文件大小
 	const char *getFilePath() const;
