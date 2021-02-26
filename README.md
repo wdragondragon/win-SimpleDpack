@@ -55,6 +55,7 @@ dpackType.c     // structures decleare
 * v0.3.2  appendSection, savePe rewrite,  merge the shellcode and packed data into one section
 * v0.4 multi section (except rsrc) pack finished!
 * v0.5 x64 supprot!
+* v0.5.1 fixed IAT FT pointer to OFT problem
 
 ## coming soon(maybe...):
 

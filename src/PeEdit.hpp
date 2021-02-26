@@ -1,5 +1,5 @@
 /*
-	peinfo v0.4,
+	peinfo v0.5,
 	to edit pe32/pe64 structure
 	designed by devseed,
 	https://github.com/YuriSizuku/SimpleDpack

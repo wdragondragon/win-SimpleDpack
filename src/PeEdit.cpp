@@ -87,21 +87,25 @@ DWORD CPEedit::shiftOft(LPBYTE pPeBuf, DWORD offset, bool bMemAlign, bool bReset
 	for (int i = 0; i < dll_num; i++)
 	{
 		if (pImportDescriptor[i].OriginalFirstThunk == 0) continue;
-		auto pThunk = (PIMAGE_THUNK_DATA)(pPeBuf + (bMemAlign ?
+		auto pOFT = (PIMAGE_THUNK_DATA)(pPeBuf + (bMemAlign ?
 			pImportDescriptor[i].OriginalFirstThunk: 
 			rva2faddr(pPeBuf, pImportDescriptor[i].OriginalFirstThunk)));
+		auto pFT = (PIMAGE_THUNK_DATA)(pPeBuf + (bMemAlign ?
+			pImportDescriptor[i].FirstThunk :
+			rva2faddr(pPeBuf, pImportDescriptor[i].FirstThunk)));
 		DWORD item_num = 0;
-		for (int j = 0; pThunk[j].u1.AddressOfData != 0; j++)
+		for (int j = 0; pOFT[j].u1.AddressOfData != 0; j++)
 		{
 			item_num++; //一个dll中导入函数的个数,不包括全0的项
-			if ((pThunk[j].u1.Ordinal >> 31) != 0x1) //不是用序号
+			if ((pOFT[j].u1.Ordinal >> 31) != 0x1) //不是用序号
 			{
-				pThunk[j].u1.AddressOfData += offset;
+				pOFT[j].u1.AddressOfData += offset;
+				if (bResetFt) pFT[j].u1.AddressOfData = pOFT[j].u1.AddressOfData;
 			}
 		}
 		pImportDescriptor[i].OriginalFirstThunk += offset;
+		pImportDescriptor[i].FirstThunk += offset;
 		pImportDescriptor[i].Name += offset;
-		if(bResetFt) pImportDescriptor[i].FirstThunk =  pImportDescriptor[i].OriginalFirstThunk;
 		func_num += item_num;
 	}
 	return func_num;

@@ -40,7 +40,6 @@ void dpackStart()
 __declspec(naked) void dpackStart()//此函数中不要有局部变量
 #endif
 {
-
 	BeforeUnpack();
 	MallocAll(NULL);
 	UnpackAll(NULL);
