@@ -56,6 +56,7 @@ dpackType.c     // structures decleare
 * v0.4 multi section (except rsrc) pack finished!
 * v0.5 x64 supprot!
 * v0.5.1 fixed IAT FT pointer to OFT problem
+* v0.5.2 fix reloc problem, compatible with windows XP, change code to utf8bom
 
 ## coming soon(maybe...):
 
