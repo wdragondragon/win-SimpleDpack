@@ -1,8 +1,8 @@
-#include <Windows.h>
+ï»¿#include <Windows.h>
 #include "dpackType.h"
 size_t dlzmaPack(LPBYTE pDstBuf,LPBYTE pSrcBuf,size_t srcSize)
 {
-	size_t dstSize = -1; //×î´óµÄbuffersize£¬ Îª0»á³ö´í
+	size_t dstSize = -1; //æœ€å¤§çš„buffersizeï¼Œ ä¸º0ä¼šå‡ºé”™
 	size_t propSize = sizeof(DLZMA_HEADER);
 	PDLZMA_HEADER pDlzmah=(PDLZMA_HEADER)pDstBuf;
 	

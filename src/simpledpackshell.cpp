@@ -1,7 +1,7 @@
-#include "simpledpackshell.h"
+ï»¿#include "simpledpackshell.h"
 void dpackStart();
 extern "C" {
-	DPACK_API DPACK_SHELL_INDEX g_dpackShellIndex = { (PVOID)dpackStart,0 };//Ë³±ã³õÊ¼»¯¿Çoep
+	DPACK_API DPACK_SHELL_INDEX g_dpackShellIndex = { (PVOID)dpackStart,0 };//é¡ºä¾¿åˆå§‹åŒ–å£³oep
 	ULONGLONG g_orgOep;
 }
 
@@ -37,7 +37,7 @@ __declspec(naked) void JmpOrgOep()
 #ifdef _WIN64 
 void dpackStart()
 #else
-__declspec(naked) void dpackStart()//´Ëº¯ÊıÖĞ²»ÒªÓĞ¾Ö²¿±äÁ¿
+__declspec(naked) void dpackStart()//æ­¤å‡½æ•°ä¸­ä¸è¦æœ‰å±€éƒ¨å˜é‡
 #endif
 {
 	BeforeUnpack();
@@ -94,67 +94,67 @@ void UnpackAll(PVOID arg)
 #endif
 	for(int i=0; i<g_dpackShellIndex.SectionNum; i++)
 	{
-		switch(g_dpackShellIndex.SectionIndex[i].DpackSectionType)
+		switch (g_dpackShellIndex.SectionIndex[i].DpackSectionType)
 		{
-		case  DPACK_SECTION_RAW:
-		{
-			if (g_dpackShellIndex.SectionIndex[i].OrgSize == 0) continue;
-			VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
-				g_dpackShellIndex.SectionIndex[i].OrgSize,
-				PAGE_EXECUTE_READWRITE, &oldProtect);
-			memcpy((void*)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
-				(void*)(imagebase + g_dpackShellIndex.SectionIndex[i].DpackRva),
-				g_dpackShellIndex.SectionIndex[i].OrgSize);
-			VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
-				g_dpackShellIndex.SectionIndex[i].OrgSize,
-				oldProtect, &oldProtect);
-			break;
-		}
-		case DPACK_SECTION_DLZMA:
-		{
-			LPBYTE buf = new BYTE[g_dpackShellIndex.SectionIndex[i].OrgSize];
-			if (!dlzmaUnpack(buf, 
-				(LPBYTE)(g_dpackShellIndex.SectionIndex[i].DpackRva + imagebase),
-				g_dpackShellIndex.SectionIndex[i].DpackSize))
+			case  DPACK_SECTION_RAW:
 			{
-				MessageBox(0, "unpack failed", "error", 0);
-				ExitProcess(1);
+				if (g_dpackShellIndex.SectionIndex[i].OrgSize == 0) continue;
+				VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+					g_dpackShellIndex.SectionIndex[i].OrgSize,
+					PAGE_EXECUTE_READWRITE, &oldProtect);
+				memcpy((void*)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+					(void*)(imagebase + g_dpackShellIndex.SectionIndex[i].DpackRva),
+					g_dpackShellIndex.SectionIndex[i].OrgSize);
+				VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+					g_dpackShellIndex.SectionIndex[i].OrgSize,
+					oldProtect, &oldProtect);
+				break;
 			}
-			VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
-				g_dpackShellIndex.SectionIndex[i].OrgSize,
-				PAGE_EXECUTE_READWRITE, &oldProtect);
-			memcpy((void*)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
-				buf, g_dpackShellIndex.SectionIndex[i].OrgSize);
-			VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
-				g_dpackShellIndex.SectionIndex[i].OrgSize,
-				oldProtect, &oldProtect);
-			delete[] buf;
-			break;
-		}
-		default:
-			break;
+			case DPACK_SECTION_DLZMA:
+			{
+				LPBYTE buf = new BYTE[g_dpackShellIndex.SectionIndex[i].OrgSize];
+				if (!dlzmaUnpack(buf,
+					(LPBYTE)(g_dpackShellIndex.SectionIndex[i].DpackRva + imagebase),
+					g_dpackShellIndex.SectionIndex[i].DpackSize))
+				{
+					MessageBox(0, "unpack failed", "error", 0);
+					ExitProcess(1);
+				}
+				VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+					g_dpackShellIndex.SectionIndex[i].OrgSize,
+					PAGE_EXECUTE_READWRITE, &oldProtect);
+				memcpy((void*)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+					buf, g_dpackShellIndex.SectionIndex[i].OrgSize);
+				VirtualProtect((LPVOID)(imagebase + g_dpackShellIndex.SectionIndex[i].OrgRva),
+					g_dpackShellIndex.SectionIndex[i].OrgSize,
+					oldProtect, &oldProtect);
+				delete[] buf;
+				break;
+			}
+			default:
+				break;
 		}
 	}
 }
 
-void LoadOrigionIat(PVOID arg)  // ÒòÎª½«iat¸ÄÎªÁË¿ÇµÄ£¬ËùÒÔÒª»¹Ô­Ô­À´µÄiat
+void LoadOrigionIat(PVOID arg)  // å› ä¸ºå°†iatæ”¹ä¸ºäº†å£³çš„ï¼Œæ‰€ä»¥è¦è¿˜åŸåŸæ¥çš„iat
 {
 	DWORD i,j;
 	DWORD dll_num = g_dpackShellIndex.OrgIndex.ImportSize
-		/sizeof(IMAGE_IMPORT_DESCRIPTOR);//µ¼ÈëdllµÄ¸öÊı,º¬×îºóÈ«Îª¿ÕµÄÒ»Ïî
-	DWORD item_num=0;//Ò»¸ödllÖĞµ¼Èëº¯ÊıµÄ¸öÊı,²»°üÀ¨È«0µÄÏî
+		/sizeof(IMAGE_IMPORT_DESCRIPTOR);//å¯¼å…¥dllçš„ä¸ªæ•°,å«æœ€åå…¨ä¸ºç©ºçš„ä¸€é¡¹
+	DWORD item_num=0;//ä¸€ä¸ªdllä¸­å¯¼å…¥å‡½æ•°çš„ä¸ªæ•°,ä¸åŒ…æ‹¬å…¨0çš„é¡¹
 	DWORD oldProtect;
-	HMODULE tHomule;//ÁÙÊ±¼ÓÔØdllµÄ¾ä±ú
-	LPBYTE tName;//ÁÙÊ±´æ·ÅÃû×Ö
+	HMODULE tHomule;//ä¸´æ—¶åŠ è½½dllçš„å¥æŸ„
+	LPBYTE tName;//ä¸´æ—¶å­˜æ”¾åå­—
 #ifdef _WIN64
-	ULONGLONG tVa;//ÁÙÊ±´æ·ÅĞéÄâµØÖ·
+	ULONGLONG tVa;//ä¸´æ—¶å­˜æ”¾è™šæ‹Ÿåœ°å€
 	ULONGLONG imagebase = g_dpackShellIndex.OrgIndex.ImageBase;
 #else
-	DWORD tVa;//ÁÙÊ±´æ·ÅĞéÄâµØÖ·
+	DWORD tVa;//ä¸´æ—¶å­˜æ”¾è™šæ‹Ÿåœ°å€
 	DWORD imagebase = g_dpackShellIndex.OrgIndex.ImageBase;
 #endif
 	PIMAGE_IMPORT_DESCRIPTOR pImport=(PIMAGE_IMPORT_DESCRIPTOR)(imagebase+
-		g_dpackShellIndex.OrgIndex.ImportRva);//Ö¸ÏòµÚÒ»¸ödll
+		g_dpackShellIndex.OrgIndex.ImportRva);//æŒ‡å‘ç¬¬ä¸€ä¸ªdll
 	PIMAGE_THUNK_DATA pfThunk;//ft
 	PIMAGE_THUNK_DATA poThunk;//oft
 	PIMAGE_IMPORT_BY_NAME pFuncName;
@@ -162,17 +162,20 @@ void LoadOrigionIat(PVOID arg)  // ÒòÎª½«iat¸ÄÎªÁË¿ÇµÄ£¬ËùÒÔÒª»¹Ô­Ô­À´µÄiat
 	{
 		if(pImport[i].OriginalFirstThunk==0) continue;
 		tName=(LPBYTE)(imagebase+pImport[i].Name);
-		tHomule=LoadLibrary((LPCSTR)tName);
-		pfThunk=(PIMAGE_THUNK_DATA)(imagebase+pImport[i].FirstThunk);
-		poThunk=(PIMAGE_THUNK_DATA)(imagebase+pImport[i].OriginalFirstThunk);
-		for(j=0;poThunk[j].u1.AddressOfData!=0;j++){}//×¢Òâ¸öÊı¡£¡£¡£
+		tHomule=LoadLibraryA((LPCSTR)tName);
+		pfThunk=(PIMAGE_THUNK_DATA)
+			(imagebase+pImport[i].FirstThunk);
+		poThunk=(PIMAGE_THUNK_DATA)
+			(imagebase+pImport[i].OriginalFirstThunk);
+		for(j=0;poThunk[j].u1.AddressOfData!=0;j++){}//æ³¨æ„ä¸ªæ•°ã€‚ã€‚ã€‚
 		item_num=j;
 
-		VirtualProtect((LPVOID)(pfThunk),item_num * sizeof(IMAGE_THUNK_DATA),
-						PAGE_EXECUTE_READWRITE,&oldProtect);//×¢ÒâÖ¸ÕëÎ»ÖÃ
+		VirtualProtect((LPVOID)(pfThunk),
+			item_num * sizeof(IMAGE_THUNK_DATA),
+			PAGE_EXECUTE_READWRITE,&oldProtect);//æ³¨æ„æŒ‡é’ˆä½ç½®
 		for(j=0;j<item_num;j++)
 		{
-			if((poThunk[j].u1.Ordinal >>31) != 0x1) //²»ÊÇÓÃĞòºÅ
+			if((poThunk[j].u1.Ordinal >>31) != 0x1) //ä¸æ˜¯ç”¨åºå·
 			{
 				pFuncName=(PIMAGE_IMPORT_BY_NAME)(imagebase+poThunk[j].u1.AddressOfData);
 				tName=(LPBYTE)pFuncName->Name;
@@ -184,7 +187,7 @@ void LoadOrigionIat(PVOID arg)  // ÒòÎª½«iat¸ÄÎªÁË¿ÇµÄ£¬ËùÒÔÒª»¹Ô­Ô­À´µÄiat
 			}
 			else
 			{
-				//Èç¹û´Ë²ÎÊıÊÇÒ»¸öĞòÊıÖµ£¬Ëü±ØĞëÔÚÒ»¸ö×ÖµÄµÍ×Ö½Ú£¬¸ß×Ö½Ú±ØĞëÎª0¡£
+				//å¦‚æœæ­¤å‚æ•°æ˜¯ä¸€ä¸ªåºæ•°å€¼ï¼Œå®ƒå¿…é¡»åœ¨ä¸€ä¸ªå­—çš„ä½å­—èŠ‚ï¼Œé«˜å­—èŠ‚å¿…é¡»ä¸º0ã€‚
 #ifdef _WIN64			
 				tVa = (ULONGLONG)GetProcAddress(tHomule,(LPCSTR)(poThunk[j].u1.Ordinal & 0x0000ffff));
 #else
@@ -196,9 +199,10 @@ void LoadOrigionIat(PVOID arg)  // ÒòÎª½«iat¸ÄÎªÁË¿ÇµÄ£¬ËùÒÔÒª»¹Ô­Ô­À´µÄiat
 				MessageBox(NULL, "IAT load error!", "error", NULL);
 				ExitProcess(1);
 			}
-			pfThunk[j].u1.Function = tVa;//×¢Òâ¼ä½ÓÑ°Ö·
+			pfThunk[j].u1.Function = tVa;//æ³¨æ„é—´æ¥å¯»å€
 		}
-		VirtualProtect((LPVOID)(pfThunk),item_num * sizeof(IMAGE_THUNK_DATA),
-				oldProtect,&oldProtect);
+		VirtualProtect((LPVOID)(pfThunk),
+			item_num * sizeof(IMAGE_THUNK_DATA),
+		    oldProtect,&oldProtect);
 	}
 }

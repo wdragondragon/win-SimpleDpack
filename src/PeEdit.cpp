@@ -1,9 +1,9 @@
-#include "PEedit.hpp"
+ï»¿#include "PEedit.hpp"
 #include <fstream>
 using namespace std;
 
 /* static functions */
-DWORD CPEedit::addOverlay(const char* path, LPBYTE pOverlay, DWORD size)//¸½¼ÓÊı¾İ£¬´Ë´¦²»ÔÙ¶ÔÆëÁË
+DWORD CPEedit::addOverlay(const char* path, LPBYTE pOverlay, DWORD size)//é™„åŠ æ•°æ®ï¼Œæ­¤å¤„ä¸å†å¯¹é½äº†
 {
 	if (pOverlay == NULL) return 0;
 	ofstream fout(path, ios::binary | ios::app);
@@ -21,14 +21,14 @@ DWORD CPEedit::setOepRva(const char* path, DWORD rva)
 	if (readsize == 0) return 0;
 	DWORD oldrva = setOepRva((LPBYTE)buf, rva);
 	if (oldrva == 0) return 0;
-	ofstream fout(path, ios::binary | ios::ate | ios::in);//ios::outÔòÇå¿ÕÎÄ¼ş£¬ios::appÃ¿´ÎĞ´¶¼ÊÇÔÚ×îºó£¬ios::ate¿ÉÒÔÓÃseekp
+	ofstream fout(path, ios::binary | ios::ate | ios::in);//ios::outåˆ™æ¸…ç©ºæ–‡ä»¶ï¼Œios::appæ¯æ¬¡å†™éƒ½æ˜¯åœ¨æœ€åï¼Œios::ateå¯ä»¥ç”¨seekp
 	fout.seekp(0, ios::beg);
 	fout.write((const char*)buf, readsize);
 	fout.close();
 	return oldrva;
 }
 
-DWORD CPEedit::setOepRva(LPBYTE pPeBuf, DWORD rva)//·µ»ØÔ­À´µÄrva
+DWORD CPEedit::setOepRva(LPBYTE pPeBuf, DWORD rva)//è¿”å›åŸæ¥çš„rva
 {
 	if (pPeBuf == NULL) return 0;
 	if (isPe(pPeBuf) <= 0) return 0;
@@ -38,39 +38,52 @@ DWORD CPEedit::setOepRva(LPBYTE pPeBuf, DWORD rva)//·µ»ØÔ­À´µÄrva
 	return oldrva;
 }
 
-DWORD CPEedit::shiftReloc(LPBYTE pPeBuf, size_t oldImageBase, size_t newImageBase, DWORD offset, bool bMemAlign)
+DWORD CPEedit::shiftReloc(LPBYTE pPeBuf, size_t oldImageBase,
+	size_t newImageBase, DWORD offset, bool bMemAlign)
 {
-	//ĞŞ¸´ÖØ¶¨Î»,ÆäÊµ´Ë´¦pShellBufÎªhShell¸±±¾
+	//ä¿®å¤é‡å®šä½,å…¶å®æ­¤å¤„pShellBufä¸ºhShellå‰¯æœ¬
 	DWORD all_num = 0;
 	DWORD sumsize = 0;
 	auto pRelocEntry = &getImageDataDirectory(pPeBuf)[IMAGE_DIRECTORY_ENTRY_BASERELOC];
 	while (sumsize < pRelocEntry->Size)
 	{
-		auto pBaseRelocation = (PIMAGE_BASE_RELOCATION)(pPeBuf  + sumsize + 
-			(bMemAlign ? pRelocEntry->VirtualAddress :
-				rva2faddr(pPeBuf, pRelocEntry->VirtualAddress)));
+		auto pBaseRelocation = (PIMAGE_BASE_RELOCATION)(pPeBuf  
+			+ sumsize + (bMemAlign ? 
+				pRelocEntry->VirtualAddress :rva2faddr(
+					pPeBuf, pRelocEntry->VirtualAddress)));
 		auto pRelocOffset = (PRELOCOFFSET)
-			((LPBYTE)pBaseRelocation + sizeof(IMAGE_BASE_RELOCATION));
+			((LPBYTE)pBaseRelocation + 
+				sizeof(IMAGE_BASE_RELOCATION));
 		DWORD item_num = (pBaseRelocation->SizeOfBlock - 
-			sizeof(IMAGE_BASE_RELOCATION)) / sizeof(RELOCOFFSET);
-		for (int i = 0; i < item_num; i++)
+			sizeof(IMAGE_BASE_RELOCATION)) / 
+			sizeof(RELOCOFFSET);
+		for (size_t i = 0; i < item_num; i++)
 		{
-			if (pRelocOffset[i].offset == 0) continue;
-			DWORD toffset = pRelocOffset[i].offset + pBaseRelocation->VirtualAddress;
-			if (!bMemAlign) toffset = rva2faddr(pPeBuf, toffset);
+			if (!pRelocOffset[i].type && !pRelocOffset[i].offset)
+			{
+				continue;
+			}
+			DWORD toffset = pRelocOffset[i].offset +
+				pBaseRelocation->VirtualAddress;
+			if (!bMemAlign) toffset = 
+				rva2faddr(pPeBuf, toffset);
 
-			// ĞÂµÄÖØ¶¨Î»µØÖ· = ÖØ¶¨Î»ºóµÄµØÖ·(VA)-¼ÓÔØÊ±µÄ¾µÏñ»ùÖ·(hModule VA) + ĞÂµÄ¾µÏñ»ùÖ·(VA) + ĞÂ´úÂë»ùÖ·RVA£¨Ç°ÃæÓÃÓÚ´æ·ÅÑ¹ËõµÄ´úÂë£©
-			// ÓÉÓÚ½²dll¸½¼ÓÔÚºóÃæ£¬ĞèÒªÔÚdll shellÖĞµÄÖØ¶¨Î»¼ÓÉÏÆ«ÒÆĞŞÕı
+			// æ–°çš„é‡å®šä½åœ°å€ = é‡å®šä½åçš„åœ°å€(VA)-åŠ è½½æ—¶çš„é•œåƒåŸºå€(hModule VA) + æ–°çš„é•œåƒåŸºå€(VA) + æ–°ä»£ç åŸºå€RVAï¼ˆå‰é¢ç”¨äºå­˜æ”¾å‹ç¼©çš„ä»£ç ï¼‰
+			// ç”±äºè®²dllé™„åŠ åœ¨åé¢ï¼Œéœ€è¦åœ¨dll shellä¸­çš„é‡å®šä½åŠ ä¸Šåç§»ä¿®æ­£
 #ifdef _WIN64
-			*(PULONGLONG)(pPeBuf + toffset) += newImageBase - oldImageBase + offset; //ÖØ¶¨ÏòÃ¿Ò»ÏîµØÖ·
+			*(PULONGLONG)(pPeBuf + toffset) += //é‡å®šå‘æ¯ä¸€é¡¹åœ°å€
+				newImageBase - oldImageBase + offset; 
 #else
-			//printf("%08lX -> ", *(PDWORD)(pPeBuf + toffset));
-			*(PDWORD)(pPeBuf + toffset) += newImageBase - oldImageBase + offset; //ÖØ¶¨ÏòÃ¿Ò»ÏîµØÖ·
-			//printf("%08lX\n", *(PDWORD)(pPeBuf + toffset));
+			//printf("reloc at rva %08X, ", toffset);
+			//printf("%08X -> ", *(PDWORD)(pPeBuf + toffset));
+			*(PDWORD)(pPeBuf + toffset) += //é‡å®šå‘æ¯ä¸€é¡¹åœ°å€
+				newImageBase - oldImageBase + offset; 
+			//printf("%08X\n", *(PDWORD)(pPeBuf + toffset));
 #endif
 		}
-		pBaseRelocation->VirtualAddress += offset; //ÖØ¶¨ÏòÒ³±í»ùÖ·
-		sumsize += sizeof(RELOCOFFSET) * item_num + sizeof(IMAGE_BASE_RELOCATION);
+		pBaseRelocation->VirtualAddress += offset; //é‡å®šå‘é¡µè¡¨åŸºå€
+		sumsize += sizeof(RELOCOFFSET) * item_num + 
+			sizeof(IMAGE_BASE_RELOCATION);
 		all_num += item_num;
 	}
 	return all_num;
@@ -79,12 +92,12 @@ DWORD CPEedit::shiftReloc(LPBYTE pPeBuf, size_t oldImageBase, size_t newImageBas
 DWORD CPEedit::shiftOft(LPBYTE pPeBuf, DWORD offset, bool bMemAlign, bool bResetFt)
 {
 	auto pImportEntry = &getImageDataDirectory(pPeBuf)[IMAGE_DIRECTORY_ENTRY_IMPORT];
-	DWORD dll_num = pImportEntry->Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);//µ¼ÈëdllµÄ¸öÊı,º¬×îºóÈ«Îª¿ÕµÄÒ»Ïî
-	DWORD func_num = 0;//ËùÓĞµ¼Èëº¯Êı¸öÊı£¬²»°üÀ¨È«0µÄÏî
+	DWORD dll_num = pImportEntry->Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);//å¯¼å…¥dllçš„ä¸ªæ•°,å«æœ€åå…¨ä¸ºç©ºçš„ä¸€é¡¹
+	DWORD func_num = 0;//æ‰€æœ‰å¯¼å…¥å‡½æ•°ä¸ªæ•°ï¼Œä¸åŒ…æ‹¬å…¨0çš„é¡¹
 	auto pImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR) (pPeBuf +
 		(bMemAlign ? pImportEntry->VirtualAddress : 
-		rva2faddr(pPeBuf, pImportEntry->VirtualAddress)));//Ö¸ÏòµÚÒ»¸ödll
-	for (int i = 0; i < dll_num; i++)
+		rva2faddr(pPeBuf, pImportEntry->VirtualAddress)));//æŒ‡å‘ç¬¬ä¸€ä¸ªdll
+	for (size_t i = 0; i < dll_num; i++)
 	{
 		if (pImportDescriptor[i].OriginalFirstThunk == 0) continue;
 		auto pOFT = (PIMAGE_THUNK_DATA)(pPeBuf + (bMemAlign ?
@@ -96,8 +109,8 @@ DWORD CPEedit::shiftOft(LPBYTE pPeBuf, DWORD offset, bool bMemAlign, bool bReset
 		DWORD item_num = 0;
 		for (int j = 0; pOFT[j].u1.AddressOfData != 0; j++)
 		{
-			item_num++; //Ò»¸ödllÖĞµ¼Èëº¯ÊıµÄ¸öÊı,²»°üÀ¨È«0µÄÏî
-			if ((pOFT[j].u1.Ordinal >> 31) != 0x1) //²»ÊÇÓÃĞòºÅ
+			item_num++; //ä¸€ä¸ªdllä¸­å¯¼å…¥å‡½æ•°çš„ä¸ªæ•°,ä¸åŒ…æ‹¬å…¨0çš„é¡¹
+			if ((pOFT[j].u1.Ordinal >> 31) != 0x1) //ä¸æ˜¯ç”¨åºå·
 			{
 				pOFT[j].u1.AddressOfData += offset;
 				if (bResetFt) pFT[j].u1.AddressOfData = pOFT[j].u1.AddressOfData;
@@ -120,7 +133,7 @@ DWORD CPEedit::appendSection(LPBYTE pPeBuf, IMAGE_SECTION_HEADER newSectHeader,
 	DWORD fileAlign = pOptHeader->FileAlignment;
 	DWORD memAlign = pOptHeader->SectionAlignment;
 
-	// ĞŞÕıĞÂsect headerÖ¸Õë
+	// ä¿®æ­£æ–°sect headeræŒ‡é’ˆ
 	if (!newSectHeader.SizeOfRawData)
 	{
 		newSectHeader.SizeOfRawData = toAlign(newSectSize, fileAlign);
@@ -140,10 +153,10 @@ DWORD CPEedit::appendSection(LPBYTE pPeBuf, IMAGE_SECTION_HEADER newSectHeader,
 		if (newSectHeader.PointerToRawData < pSectHeader[oldSectNum - 1].PointerToRawData
 			+ toAlign(pSectHeader[oldSectNum - 1].PointerToRawData, fileAlign))
 		{
-			return 0; // Ö¸¶¨faddr ±ÈÔ­À´×îºóÒ»¸öÇø¶ÎĞ¡£¬ÎŞ·¨Ìí¼Ó
+			return 0; // æŒ‡å®šfaddr æ¯”åŸæ¥æœ€åä¸€ä¸ªåŒºæ®µå°ï¼Œæ— æ³•æ·»åŠ 
 		}
 	}
-	if (!newSectHeader.VirtualAddress) // ²»Ö¸¶¨rva
+	if (!newSectHeader.VirtualAddress) // ä¸æŒ‡å®šrva
 	{
 		newSectHeader.VirtualAddress = toAlign(
 			pSectHeader[oldSectNum - 1].VirtualAddress
@@ -154,26 +167,26 @@ DWORD CPEedit::appendSection(LPBYTE pPeBuf, IMAGE_SECTION_HEADER newSectHeader,
 		if (newSectHeader.VirtualAddress < pSectHeader[oldSectNum - 1].VirtualAddress 
 			+ toAlign(pSectHeader[oldSectNum - 1].Misc.VirtualSize, memAlign))
 		{
-			return 0; // Ö¸¶¨rva ±ÈÔ­À´×îºóÒ»¸öÇø¶ÎĞ¡£¬ÎŞ·¨Ìí¼Ó
+			return 0; // æŒ‡å®šrva æ¯”åŸæ¥æœ€åä¸€ä¸ªåŒºæ®µå°ï¼Œæ— æ³•æ·»åŠ 
 		}
-		// ĞŞ¸ÄÇ°Ò»¸öÇø¶ÎVitrualSizeÊ¹µÃÄÚ´æÉÏÃ»ÓĞ¿ÕÏ¶
+		// ä¿®æ”¹å‰ä¸€ä¸ªåŒºæ®µVitrualSizeä½¿å¾—å†…å­˜ä¸Šæ²¡æœ‰ç©ºéš™
 		pSectHeader[oldSectNum - 1].Misc.VirtualSize +=
 			(newSectHeader.VirtualAddress - 
 				pSectHeader[oldSectNum - 1].VirtualAddress - 
 				pSectHeader[oldSectNum - 1].Misc.VirtualSize) / memAlign * memAlign;
 	}
 
-	// Ìí¼ÓĞÂÇø¶ÎÍ·
+	// æ·»åŠ æ–°åŒºæ®µå¤´
 	memcpy(&pSectHeader[oldSectNum], &newSectHeader, sizeof(IMAGE_SECTION_HEADER));
 	memset(&pSectHeader[oldSectNum + 1], 0, sizeof(IMAGE_SECTION_HEADER));
 
-	// Ìí¼ÓĞÂÇø¶ÎÊı¾İ
+	// æ·»åŠ æ–°åŒºæ®µæ•°æ®
 	LPBYTE pNewSectStart = pPeBuf + (bMemAlign ? 
 		pSectHeader[oldSectNum].VirtualAddress : pSectHeader->PointerToRawData);
 	memset(pNewSectStart, 0, bMemAlign ? memAlign : fileAlign);
 	memcpy(pNewSectStart, pNewSectBuf, newSectSize);
 	
-	// ĞŞÕıpe´óĞ¡
+	// ä¿®æ­£peå¤§å°
 	//pOptHeader->SizeOfHeaders += sizeof(IMAGE_SECTION_HEADER);
 	pOptHeader->SizeOfImage = pSectHeader[oldSectNum].VirtualAddress 
 		+ toAlign(pSectHeader[oldSectNum].Misc.VirtualSize, memAlign);
@@ -188,7 +201,7 @@ DWORD CPEedit::removeSectionDatas(LPBYTE pPeBuf, int removeNum, int removeIdx[])
 	auto pSectHeader = getSectionHeader(pPeBuf);
 	DWORD decreseRawSize = 0;
 
-	for (int i = 0; i < removeNum; i++) // ÅÅĞò
+	for (int i = 0; i < removeNum; i++) // æ’åº
 	{
 		for (int j = i + 1; j < removeNum; j++)
 		{
@@ -204,8 +217,8 @@ DWORD CPEedit::removeSectionDatas(LPBYTE pPeBuf, int removeNum, int removeIdx[])
 	int j = 0;
 	for (int i = 0; i < oldSectNum; i++)
 	{
-		if (tmpidx > removeNum - 1 || i < removeIdx[tmpidx]) continue; // ±£ÁôµÄÇø¶Î
-        //ÒÆ³ıµÄÇø¶Î
+		if (tmpidx > removeNum - 1 || i < removeIdx[tmpidx]) continue; // ä¿ç•™çš„åŒºæ®µ
+        //ç§»é™¤çš„åŒºæ®µ
 		decreseRawSize += pSectHeader[i].SizeOfRawData;
 		pSectHeader[i].SizeOfRawData = 0;
 		if (i < oldSectNum - 1) 	
@@ -218,54 +231,54 @@ DWORD CPEedit::removeSectionDatas(LPBYTE pPeBuf, int removeNum, int removeIdx[])
 DWORD CPEedit::savePeFile(const char* path,
 	LPBYTE pPeBuf, DWORD FileBufSize,
 	bool bMemAlign, bool bShrinkPe,
-	LPBYTE pOverlayBuf, DWORD OverlayBufSize)//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØĞ´Èë×Ü×Ö½ÚÊı
+	LPBYTE pOverlayBuf, DWORD OverlayBufSize)//å¤±è´¥è¿”å›0ï¼ŒæˆåŠŸè¿”å›å†™å…¥æ€»å­—èŠ‚æ•°
 {
 	if (pPeBuf == NULL) return 0;
 	fstream fout;
 	fout.open(path, ios::out | ios::binary);
 	if (isPe((LPBYTE)pPeBuf) < 0) return 0;
 	
-	//Ğ´ÈëpeÍ·
+	//å†™å…¥peå¤´
 	PIMAGE_OPTIONAL_HEADER pOptionalHeader = getOptionalHeader(pPeBuf);
 	PIMAGE_SECTION_HEADER pSecHeader = getSectionHeader(pPeBuf);
 	fout.write((const char*)pPeBuf, pOptionalHeader->SizeOfHeaders); 
 	DWORD writesize = pOptionalHeader->SizeOfHeaders;
 
-	// Ğ´Èë¸÷Çø¶Î
+	// å†™å…¥å„åŒºæ®µ
 	for (int i = 0; i < getFileHeader(pPeBuf)->NumberOfSections; i++)
 	{
 		DWORD sectOffset = bMemAlign ? 
 			pSecHeader[i].VirtualAddress : pSecHeader[i].PointerToRawData;
 		DWORD sectsize = toAlign(pSecHeader[i].SizeOfRawData, pOptionalHeader->FileAlignment);
 		
-		size_t cur = fout.tellp();//·ÀÖ¹µØÖ·²»¶Ô
-		if (cur > pSecHeader[i].PointerToRawData) //·ÀÖ¹ÖØµş
+		auto cur = fout.tellp();//é˜²æ­¢åœ°å€ä¸å¯¹
+		if (cur > pSecHeader[i].PointerToRawData) //é˜²æ­¢é‡å 
 		{
 			fout.seekp(pSecHeader[i].PointerToRawData);
 		}
-		else if (cur < pSecHeader[i].PointerToRawData) //·ÀÖ¹Çø¶ÎÉÙ
+		else if (cur < pSecHeader[i].PointerToRawData) //é˜²æ­¢åŒºæ®µå°‘
 		{
 			if (bShrinkPe)
 			{
-				pSecHeader[i].PointerToRawData = cur;
+				pSecHeader[i].PointerToRawData = (DWORD)cur;
 			}
 			else
 			{
-				for (int j = cur; j < pSecHeader[i].PointerToRawData; j++) fout.put(0);
+				for (std::streamoff j = cur; j < pSecHeader[i].PointerToRawData; j++) fout.put(0);
 			}	
 		}
 		fout.write((const char*)(pPeBuf + sectOffset), sectsize);
 		writesize += sectsize; 
 	}
 
-	// Ğ´Èë¸½¼Ó¶Î
+	// å†™å…¥é™„åŠ æ®µ
 	if (pOverlayBuf != NULL && OverlayBufSize != 0) 
 	{
 		fout.write((const char*)pOverlayBuf, OverlayBufSize);
 		writesize += OverlayBufSize;
 	}
 	
-	//ÖØĞÂĞ´ÈëĞŞÕıµÄPEÍ·
+	//é‡æ–°å†™å…¥ä¿®æ­£çš„PEå¤´
 	fout.seekp(0, ios::beg);
 	fout.write((const char*)pPeBuf, pOptionalHeader->SizeOfHeaders);
 	fout.close();

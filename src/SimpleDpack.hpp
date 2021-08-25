@@ -1,4 +1,4 @@
-/*
+ï»¿/*
 	SimpleDpack v0.5 ,
 	to pack the pe32/pe64 pe file
 	designed by devseed,
@@ -7,7 +7,7 @@
 
 #include <Windows.h>
 #include "PEedit.hpp"
-extern "C" // c++ÖĞÒıÓÃc±ØĞëÒªÕâÑù
+extern "C" // c++ä¸­å¼•ç”¨cå¿…é¡»è¦è¿™æ ·
 {
     #include <Psapi.h>	
 	#include "dpackType.h"
@@ -22,42 +22,42 @@ typedef struct _DPACK_TMPBUF_ENTRY
 {
 	LPBYTE PackedBuf;
 	DWORD  DpackSize;
-	DWORD  OrgRva;//Èô´ËÏîÎª0£¬ÔòÌí¼Óµ½×îºóÒ»¸öÇø¶Î£¬²»Ñ¹Ëõ
+	DWORD  OrgRva;//è‹¥æ­¤é¡¹ä¸º0ï¼Œåˆ™æ·»åŠ åˆ°æœ€åä¸€ä¸ªåŒºæ®µï¼Œä¸å‹ç¼©
 	DWORD  OrgMemSize;
 	DWORD  Characteristics;
-}DPACK_TMPBUF_ENTRY, * PDPACK_TMPBUF_ENTRY; // ×îºóÒ»¸ö·Åshellcode
+}DPACK_TMPBUF_ENTRY, * PDPACK_TMPBUF_ENTRY; // æœ€åä¸€ä¸ªæ”¾shellcode
 
 class CSimpleDpack
 {
 public:
 	static LPBYTE dlzmaPack(LPBYTE pSrcBuf, size_t srcSize, 
-		size_t* pDstSize, double maxmul = 2.0); // ¼Ó¿ÇlzmaÑ¹ËõËã·¨
-	static LPBYTE dlzmaUnpack(LPBYTE pSrcBuf, size_t srcSize); // lzma½âÑ¹Ëã·¨
+		size_t* pDstSize, double maxmul = 2.0); // åŠ å£³lzmaå‹ç¼©ç®—æ³•
+	static LPBYTE dlzmaUnpack(LPBYTE pSrcBuf, size_t srcSize); // lzmaè§£å‹ç®—æ³•
 
 private:
 	char m_strFilePath[MAX_PATH];
 
 protected:
-	CPEedit m_packpe; // ĞèÒª¼Ó¿ÇµÄexe pe½á¹¹
-	CPEedit m_shellpe; // ¿ÇµÄpe½á¹¹
-	PDPACK_SHELL_INDEX m_pShellIndex; // dllÖĞµÄµ¼³ö½á¹¹
-	HMODULE m_hShell; // ¿ÇdllµÄ¾ä±ú
+	CPEedit m_packpe; // éœ€è¦åŠ å£³çš„exe peç»“æ„
+	CPEedit m_shellpe; // å£³çš„peç»“æ„
+	PDPACK_SHELL_INDEX m_pShellIndex; // dllä¸­çš„å¯¼å‡ºç»“æ„
+	HMODULE m_hShell; // å£³dllçš„å¥æŸ„
 
 	WORD m_dpackSectNum; 
-	DPACK_TMPBUF_ENTRY m_dpackTmpbuf[MAX_DPACKSECTNUM]; // ¼Ó¿ÇÇø¶ÎË÷Òı
-	bool m_packSectMap[MAX_DPACKSECTNUM]; // Çø¶ÎÊÇ·ñ±»Ñ¹Ëõmap
+	DPACK_TMPBUF_ENTRY m_dpackTmpbuf[MAX_DPACKSECTNUM]; // åŠ å£³åŒºæ®µç´¢å¼•
+	bool m_packSectMap[MAX_DPACKSECTNUM]; // åŒºæ®µæ˜¯å¦è¢«å‹ç¼©map
 
-	WORD initDpackTmpbuf();//·µ»ØÔ­À´dpackTmpBufÊıÁ¿
+	WORD initDpackTmpbuf();//è¿”å›åŸæ¥dpackTmpBufæ•°é‡
 	WORD addDpackTmpbufEntry (LPBYTE packBuf, DWORD packBufSize,
-		DWORD srcRva = 0, DWORD OrgMemSize = 0, DWORD Characteristics= 0xE0000000);//Ôö¼ÓdpackË÷Òı
-	DWORD packSection(int type=DPACK_SECTION_DLZMA);	//pack¸÷Çø¶Î
+		DWORD srcRva = 0, DWORD OrgMemSize = 0, DWORD Characteristics= 0xE0000000);//å¢åŠ dpackç´¢å¼•
+	DWORD packSection(int type=DPACK_SECTION_DLZMA);	//packå„åŒºæ®µ
 	
-	DWORD loadShellDll(const char* dllpath);	//´¦ÀíÍâ¿Ç, return dll size
-	void initShellIndex(DWORD shellEndRva); // ³õÊ¼»¯È«¾Ö±äÁ¿
-	DWORD adjustShellReloc(DWORD shellBaseRva);// ÉèÖÃdllÖØ¶¨Î»ĞÅÏ¢£¬·µ»Ø¸öÊı
-	DWORD adjustShellIat(DWORD shellBaseRva);// ÉèÖÃÓÉÆ«ÒÆÔì³ÉµÄdll iat´íÎó
-	DWORD makeAppendBuf(DWORD shellStartRva, DWORD shellEndRva,  DWORD shellBaseRva); // ×¼±¸¸½¼ÓshellcodeµÄbuf
-	void adjustPackpeHeaders(DWORD offset); // µ÷Õû¼ÓÉÏshellcodeºóµÄpeÍ·ĞÅÏ¢
+	DWORD loadShellDll(const char* dllpath);	//å¤„ç†å¤–å£³, return dll size
+	void initShellIndex(DWORD shellEndRva); // åˆå§‹åŒ–å…¨å±€å˜é‡
+	DWORD adjustShellReloc(DWORD shellBaseRva);// è®¾ç½®dllé‡å®šä½ä¿¡æ¯ï¼Œè¿”å›ä¸ªæ•°
+	DWORD adjustShellIat(DWORD shellBaseRva);// è®¾ç½®ç”±åç§»é€ æˆçš„dll iaté”™è¯¯
+	DWORD makeAppendBuf(DWORD shellStartRva, DWORD shellEndRva,  DWORD shellBaseRva); // å‡†å¤‡é™„åŠ shellcodeçš„buf
+	void adjustPackpeHeaders(DWORD offset); // è°ƒæ•´åŠ ä¸Šshellcodeåçš„peå¤´ä¿¡æ¯
 
  public:
 	CSimpleDpack()
@@ -72,10 +72,10 @@ protected:
 	void iniValue();
 	virtual	void release();
 		
-	DWORD loadPeFile(const char *path); //¼ÓÔØpeÎÄ¼ş£¬·µ»ØisPE()Öµ
-	DWORD packPe(const char *dllpath, int type=DPACK_SECTION_DLZMA); // ¼Ó¿Ç£¬Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØpackÊı¾İ´óĞ¡
-	DWORD unpackPe(int type=0); // ÍÑ¿Ç£¬ÆäËûÍ¬ÉÏ£¨ÔİÊ±²»ÊµÏÖ£©
-	DWORD savePe(const char *path); // Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØÎÄ¼ş´óĞ¡
+	DWORD loadPeFile(const char *path); //åŠ è½½peæ–‡ä»¶ï¼Œè¿”å›isPE()å€¼
+	DWORD packPe(const char *dllpath, int type=DPACK_SECTION_DLZMA); // åŠ å£³ï¼Œå¤±è´¥è¿”å›0ï¼ŒæˆåŠŸè¿”å›packæ•°æ®å¤§å°
+	DWORD unpackPe(int type=0); // è„±å£³ï¼Œå…¶ä»–åŒä¸Šï¼ˆæš‚æ—¶ä¸å®ç°ï¼‰
+	DWORD savePe(const char *path); // å¤±è´¥è¿”å›0ï¼ŒæˆåŠŸè¿”å›æ–‡ä»¶å¤§å°
 	const char *getFilePath() const;
 	CPEinfo* getExepe();
 };

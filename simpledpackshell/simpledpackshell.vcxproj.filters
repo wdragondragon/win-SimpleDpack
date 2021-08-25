@@ -34,8 +34,8 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\shellcode64.asm">
+    <CustomBuild Include="..\src\shellcode64.asm">
       <Filter>源文件</Filter>
-    </None>
+    </CustomBuild>
   </ItemGroup>
 </Project>

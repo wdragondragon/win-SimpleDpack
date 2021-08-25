@@ -1,4 +1,4 @@
-/*
+ï»¿/*
 	peinfo v0.5,
 	to inspect pe32/pe64 structure
 	designed by devseed,
@@ -11,27 +11,27 @@
 
 typedef struct _RELOCOFFSET
 {
-	WORD offset : 12;			//Æ«ÒÆÖµ
-	WORD type	: 4;			//ÖØ¶¨Î»ÊôĞÔ(·½Ê½)
+	WORD offset : 12;			//åç§»å€¼
+	WORD type	: 4;			//é‡å®šä½å±æ€§(æ–¹å¼)
 }RELOCOFFSET,*PRELOCOFFSET;
 
-#define PEHBUF_SIZE 0X500 //PE32Í·×î´ó³¤¶È
+#define PEHBUF_SIZE 0X500 //PE32å¤´æœ€å¤§é•¿åº¦
 
 class CPEinfo
 {
 public:
-	//ÎÄ¼ş´¦Àí
+	//æ–‡ä»¶å¤„ç†
 	static DWORD getFileSize(const char *path);
-	static DWORD readFile(const char *path, LPBYTE pFileBuf, DWORD size=0);//´ÓÍ·¶ÁÎÄ¼ş£¬sizeÎªÒª¶ÁµÄÊı(0¶ÁÈ¡È«²¿)£¬·µ»Ø¶ÁÈ¡×Ö½ÚÊı£¬·Åµ½pFileBufÖĞ
+	static DWORD readFile(const char *path, LPBYTE pFileBuf, DWORD size=0);//ä»å¤´è¯»æ–‡ä»¶ï¼Œsizeä¸ºè¦è¯»çš„æ•°(0è¯»å–å…¨éƒ¨)ï¼Œè¿”å›è¯»å–å­—èŠ‚æ•°ï¼Œæ”¾åˆ°pFileBufä¸­
 	static DWORD loadPeFile(const char* path,
 		LPBYTE pFileBuf, DWORD* dwFileBufSize,
 		bool bMemAlign = false,
-		LPBYTE pOverlayBuf = NULL, DWORD* OverlayBufSize = 0);//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»Ø¶ÁÈ¡×Ü×Ö½ÚÊı
+		LPBYTE pOverlayBuf = NULL, DWORD* OverlayBufSize = 0);//å¤±è´¥è¿”å›0ï¼ŒæˆåŠŸè¿”å›è¯»å–æ€»å­—èŠ‚æ•°
 	static int isPe(LPBYTE pPeBuf);
 	static int isPe(const char *path);
 	static DWORD toAlign(DWORD num,DWORD align);
 
-	// static pe ²ÎÊı»ñÈ¡
+	// static pe å‚æ•°è·å–
 	static PIMAGE_NT_HEADERS getNtHeader(LPBYTE pPeBuf);
 	static PIMAGE_FILE_HEADER getFileHeader(LPBYTE pPeBuf);
 	static PIMAGE_OPTIONAL_HEADER getOptionalHeader(LPBYTE pPeBuf);
@@ -40,19 +40,19 @@ public:
 	static PIMAGE_IMPORT_DESCRIPTOR getImportDescriptor(LPBYTE pPeBuf, bool bFromFile);
 	static PIMAGE_EXPORT_DIRECTORY getExportDirectory(LPBYTE pPeBuf, bool bFromFile);
 	static DWORD getOepRva(const char* path);
-	static DWORD getOepRva(LPBYTE pPeBuf);//·µ»ØRva
+	static DWORD getOepRva(LPBYTE pPeBuf);//è¿”å›Rva
 	static WORD getSectionNum(LPBYTE pPeBuf);
 	static int findRvaSectIdx(LPBYTE pPeBuf, DWORD rva);
 
 	static DWORD getPeMemSize(const char* path);
 	static DWORD getPeMemSize(LPBYTE pPeBuf);
 	static DWORD getOverlaySize(const char* path); 
-	static DWORD getOverlaySize(LPBYTE pFileBuf, DWORD dwFileSize); // ¼´ÎªpeºóÃæ¸½¼ÓµÄÊı¾İ
+	static DWORD getOverlaySize(LPBYTE pFileBuf, DWORD dwFileSize); // å³ä¸ºpeåé¢é™„åŠ çš„æ•°æ®
 	static DWORD readOverlay(const char* path, LPBYTE pOverlay);
 	static DWORD readOverlay(LPBYTE pFileBuf, DWORD dwFileSize, LPBYTE pOverlay);
 
-	// µØÖ·×ª»»
-	static DWORD rva2faddr(const char* path, DWORD rva);//rvaºÍfile offset×ª»»£¬ÎŞĞ§·µ»Ø0
+	// åœ°å€è½¬æ¢
+	static DWORD rva2faddr(const char* path, DWORD rva);//rvaå’Œfile offsetè½¬æ¢ï¼Œæ— æ•ˆè¿”å›0
 	static DWORD rva2faddr(LPBYTE pPeBuf, DWORD rva);
 	static DWORD faddr2rva(const char* path, DWORD faddr);
 	static DWORD faddr2rva(LPBYTE pPeBuf, DWORD faddr);
@@ -77,15 +77,15 @@ public:
 #endif
 
 protected:
-	//¼ÙÉèexeÎÄ¼ş²»³¬¹ı4g
-	bool m_bMemAlign;//ÔØÈëµÄpeÎÄ¼şÊÇ·ñÎªÄÚ´æ¶ÔÆë£¬ÔİÊ±Ö»Ğ´ÄÚ´æ¶ÔÆë°É¡£¡£
-	bool m_bMemAlloc;//ÊÇ·ñÄÚ´æÎª´Ë´¦·ÖÅäµÄ
-	char m_szFilePath[MAX_PATH]; //PEÎÄ¼şÂ·¾¶
+	//å‡è®¾exeæ–‡ä»¶ä¸è¶…è¿‡4g
+	bool m_bMemAlign;//è½½å…¥çš„peæ–‡ä»¶æ˜¯å¦ä¸ºå†…å­˜å¯¹é½ï¼Œæš‚æ—¶åªå†™å†…å­˜å¯¹é½å§ã€‚ã€‚
+	bool m_bMemAlloc;//æ˜¯å¦å†…å­˜ä¸ºæ­¤å¤„åˆ†é…çš„
+	char m_szFilePath[MAX_PATH]; //PEæ–‡ä»¶è·¯å¾„
 		
-	LPBYTE	m_pPeBuf;			//PEÎÄ¼ş»º³åÇø
-	DWORD	m_dwPeBufSize;	//PEÎÄ¼ş»º´æÇø´óĞ¡
-	LPBYTE	m_pOverlayBuf;		//PE¸½¼ÓÊı¾İ»º³åÇø£¬ÈômemalignÔòÖØĞÂ·ÖÅä£¬·ñÔòÖ¸ÏòÏàÓ¦Î»ÖÃ£¬Ã»ÓĞÎªNULL
-	DWORD	m_dwOverlayBufSize;	//PE¸½¼ÓÊı¾İ´óĞ¡
+	LPBYTE	m_pPeBuf;			//PEæ–‡ä»¶ç¼“å†²åŒº
+	DWORD	m_dwPeBufSize;	//PEæ–‡ä»¶ç¼“å­˜åŒºå¤§å°
+	LPBYTE	m_pOverlayBuf;		//PEé™„åŠ æ•°æ®ç¼“å†²åŒºï¼Œè‹¥memalignåˆ™é‡æ–°åˆ†é…ï¼Œå¦åˆ™æŒ‡å‘ç›¸åº”ä½ç½®ï¼Œæ²¡æœ‰ä¸ºNULL
+	DWORD	m_dwOverlayBufSize;	//PEé™„åŠ æ•°æ®å¤§å°
 
 public:
 	CPEinfo()
@@ -96,25 +96,25 @@ public:
 	{
 		closePeFile();
 	}
-	// ¹¹Ôìº¯ÊıÓëÔËËã·ûÖØÔØ
+	// æ„é€ å‡½æ•°ä¸è¿ç®—ç¬¦é‡è½½
 	CPEinfo(const char* path, bool bMemAlign = true);
 	CPEinfo(LPBYTE pPeBuf, DWORD filesize, bool bCopyMem = false, bool bMemAlign = true);
-	void copy(const CPEinfo& pe, bool bCopyMem = true);//Ä¬ÈÏ¿½±´º¯Êı
+	void copy(const CPEinfo& pe, bool bCopyMem = true);//é»˜è®¤æ‹·è´å‡½æ•°
 	CPEinfo(const CPEinfo& pe);
 	CPEinfo& operator=(CPEinfo& pe);
 		
-	// PEÎÄ¼ş»ù±¾²Ù×÷
-	DWORD openPeFile(const char *path,bool bMemAlign=true);//´ò¿ªpeÎÄ¼ş£¬isMemAlign=1ÒÔÄÚ´æ·½Ê½¶ÔÆë
-	int isPe();	//ÅĞ¶ÏÎÄ¼şÊÇ·ñÎªÓĞĞ§peÎÄ¼ş(-1·Çdos,-2·Çpe,010b:32exe,020b:64exe)
-	void iniValue(); //¸÷¸ö±äÁ¿¸³³õÖµ
+	// PEæ–‡ä»¶åŸºæœ¬æ“ä½œ
+	DWORD openPeFile(const char *path,bool bMemAlign=true);//æ‰“å¼€peæ–‡ä»¶ï¼ŒisMemAlign=1ä»¥å†…å­˜æ–¹å¼å¯¹é½
+	int isPe();	//åˆ¤æ–­æ–‡ä»¶æ˜¯å¦ä¸ºæœ‰æ•ˆpeæ–‡ä»¶(-1édos,-2épe,010b:32exe,020b:64exe)
+	void iniValue(); //å„ä¸ªå˜é‡èµ‹åˆå€¼
 	int attachPeBuf(LPBYTE pPeBuf, DWORD dwFileBufSize, 
 					bool isCopyMem=true, bool bMemAlign=true,
-					LPBYTE pOverlayBuf=NULL, DWORD dwOverLayBufSize=0);//¸½¼ÓÍâ²¿µÄpeÊı¾İ
-	void closePeFile(); //¹Ø±ÕpeÎÄ¼ş²¢ÊÍ·Å¿Õ¼ä
+					LPBYTE pOverlayBuf=NULL, DWORD dwOverLayBufSize=0);//é™„åŠ å¤–éƒ¨çš„peæ•°æ®
+	void closePeFile(); //å…³é—­peæ–‡ä»¶å¹¶é‡Šæ”¾ç©ºé—´
 		
-	//  pe ²ÎÊı»ñÈ¡
-	bool isMemAlign() const; //trueÄÚ´æ¶ÔÆë£¬falseÎÄ¼ş¶ÔÆë
-	bool isMemAlloc() const; //ÄÚ´æÊÇ·ñÎªnew³öÀ´µÄ
+	//  pe å‚æ•°è·å–
+	bool isMemAlign() const; //trueå†…å­˜å¯¹é½ï¼Œfalseæ–‡ä»¶å¯¹é½
+	bool isMemAlloc() const; //å†…å­˜æ˜¯å¦ä¸ºnewå‡ºæ¥çš„
 	const char* const getFilePath() const;
 	LPBYTE getPeBuf() const;
 	DWORD getAlignSize() const;
@@ -134,7 +134,7 @@ public:
 	WORD getSectionNum();
 	int findRvaSectIdx(DWORD rva);
 
-	// µØÖ·×ª»»
+	// åœ°å€è½¬æ¢
 	DWORD rva2faddr(DWORD rva) const;
 	DWORD faddr2rva(DWORD faddr) const;
 #ifdef _WIN64

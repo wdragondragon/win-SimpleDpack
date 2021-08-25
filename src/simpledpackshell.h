@@ -1,4 +1,4 @@
-/*
+ï»¿/*
 	simpledpackshell v0.5 ,
 	The shellcode to be append to exe file to unpack
 	designed by devseed,
@@ -12,11 +12,11 @@
 #define _SIMPLEDPACKSHELL_H
 extern "C" {
     #include "dpackType.h"
-	void BeforeUnpack(); // ½âÑ¹Ç°µÄ²Ù×÷£¬±ÈÈçËµ¼ÓÃÜ½âÃÜÏà¹Ø
-	void AfterUnpack(); // ½âÑ¹ºó²Ù×÷
-	void JmpOrgOep();// Ìø×ªµ½Ô´³ÌĞò
+	void BeforeUnpack(); // è§£å‹å‰çš„æ“ä½œï¼Œæ¯”å¦‚è¯´åŠ å¯†è§£å¯†ç›¸å…³
+	void AfterUnpack(); // è§£å‹åæ“ä½œ
+	void JmpOrgOep();// è·³è½¬åˆ°æºç¨‹åº
 }
-void MallocAll(PVOID arg); // Ô¤·ÖÅäÄÚ´æ
-void UnpackAll(PVOID arg); // ½âÑ¹ËùÓĞÇø¶Î
-void LoadOrigionIat(PVOID arg);	// ¼ÓÔØÔ­À´µÄiat
+void MallocAll(PVOID arg); // é¢„åˆ†é…å†…å­˜
+void UnpackAll(PVOID arg); // è§£å‹æ‰€æœ‰åŒºæ®µ
+void LoadOrigionIat(PVOID arg);	// åŠ è½½åŸæ¥çš„iat
 #endif

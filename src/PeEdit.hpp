@@ -1,4 +1,4 @@
-/*
+ï»¿/*
 	peinfo v0.5,
 	to edit pe32/pe64 structure
 	designed by devseed,
@@ -13,27 +13,27 @@ class CPEedit :public CPEinfo
 public:
 	static DWORD addOverlay(const char* path, LPBYTE pOverlay, DWORD size);
 	static DWORD setOepRva(const char* path, DWORD rva);
-	static DWORD setOepRva(LPBYTE pPeBuf, DWORD rva);//·µ»ØÔ­À´µÄrvas
+	static DWORD setOepRva(LPBYTE pPeBuf, DWORD rva);//è¿”å›åŸæ¥çš„rvas
 	static DWORD shiftReloc(LPBYTE pPeBuf, size_t oldImageBase, size_t newImageBase, 
-		DWORD offset, bool bMemAlign = true); // ½«reloc¼ÇÂ¼ÒÔ¼°relocÖ¸ÏòµÄµØÖ·½øĞĞ»ùÖ·±ä»»
-	static DWORD shiftOft(LPBYTE pPeBuf, DWORD offset, bool bMemAlign = true, bool bResetFt = true); // ½«IAT½øĞĞ»ùÖ·±ä»», ·µ»ØĞŞ¸ÄiatÊıÁ¿
-	//Ìí¼ÓÇø¶Î£¬·µ»ØÌí¼ÓµÄÇø¶ÎºóµÄ×Ü×Ö½ÚÊı£¬¼ÙÉèÇø¶ÎË÷Òı²»»á³¬¹ıµÚÒ»¸öÇø¶Î£¬ÇÒ»º´æÇø×ã¹»´ó
+		DWORD offset, bool bMemAlign = true); // å°†relocè®°å½•ä»¥åŠrelocæŒ‡å‘çš„åœ°å€è¿›è¡ŒåŸºå€å˜æ¢
+	static DWORD shiftOft(LPBYTE pPeBuf, DWORD offset, bool bMemAlign = true, bool bResetFt = true); // å°†IATè¿›è¡ŒåŸºå€å˜æ¢, è¿”å›ä¿®æ”¹iatæ•°é‡
+	//æ·»åŠ åŒºæ®µï¼Œè¿”å›æ·»åŠ çš„åŒºæ®µåçš„æ€»å­—èŠ‚æ•°ï¼Œå‡è®¾åŒºæ®µç´¢å¼•ä¸ä¼šè¶…è¿‡ç¬¬ä¸€ä¸ªåŒºæ®µï¼Œä¸”ç¼“å­˜åŒºè¶³å¤Ÿå¤§
 	static DWORD appendSection(LPBYTE pPeBuf, IMAGE_SECTION_HEADER newSectHeader, 
 		LPBYTE pNewSectBuf, DWORD newSectSize, bool bMemAlign = true); 
-	// ÒÆ³ıÇø¶ÎÊı¾İ£¬·µ»ØÉ¾³ıµÄÇø¶Îraw sizeºÍ¡£²»ÒÆ³ıheaderÁË£¬ÒòÎªÇø¶ÎÖĞ¼äÓĞ¿ÕÏ¶¼ÓÔØpe»á³öÎÊÌâ
+	// ç§»é™¤åŒºæ®µæ•°æ®ï¼Œè¿”å›åˆ é™¤çš„åŒºæ®µraw sizeå’Œã€‚ä¸ç§»é™¤headeräº†ï¼Œå› ä¸ºåŒºæ®µä¸­é—´æœ‰ç©ºéš™åŠ è½½peä¼šå‡ºé—®é¢˜
 	static DWORD removeSectionDatas(LPBYTE pPeBuf, int removeNum, int removeIdx[]); 
-	static DWORD savePeFile(const char* path, // ½«»º´æÇøÖĞµÄÇø¶Îµ÷Õû²¢±£´æ³ÉÎÄ¼ş
+	static DWORD savePeFile(const char* path, // å°†ç¼“å­˜åŒºä¸­çš„åŒºæ®µè°ƒæ•´å¹¶ä¿å­˜æˆæ–‡ä»¶
 		LPBYTE pFileBuf, DWORD dwFileBufSize,
-		bool bMemAlign = false, bool bShrinkPe = true, // ÒÆ³ı¿Õ°×£¬ÈçÈ¥µôÇø¶ÎË÷ÒıµÄ²¿·Ö
-		LPBYTE pOverlayBuf = NULL, DWORD OverlayBufSize = 0);//Ê§°Ü·µ»Ø0£¬³É¹¦·µ»ØĞ´Èë×Ü×Ö½ÚÊı
+		bool bMemAlign = false, bool bShrinkPe = true, // ç§»é™¤ç©ºç™½ï¼Œå¦‚å»æ‰åŒºæ®µç´¢å¼•çš„éƒ¨åˆ†
+		LPBYTE pOverlayBuf = NULL, DWORD OverlayBufSize = 0);//å¤±è´¥è¿”å›0ï¼ŒæˆåŠŸè¿”å›å†™å…¥æ€»å­—èŠ‚æ•°
 
 public:
 	DWORD setOepRva(DWORD rva);
 	DWORD shiftReloc(size_t oldImageBase, size_t newImageBase, DWORD offset);
 	DWORD shiftOft(DWORD offset, bool bResetFt = true);
 	DWORD appendSection(IMAGE_SECTION_HEADER newSectHeader,
-		LPBYTE pNewSectBuf, DWORD newSectSize); //Ìí¼ÓÇø¶Î£¬·µ»ØĞÂÔöÇø¶Î×Ö½ÚÊı
-	DWORD removeSectionDatas(int removeNum, int removeIdx[]); // ÒÆ³ıÇø¶Î, removeIdx±ØĞëË³Ğò£¬·µ»ØremoveºóµÄÇø¶ÎÊı
-	DWORD savePeFile(const char* path, bool bShrinkPe=true); //±£´æ»º³åÇøpeÎÄ¼ş
+		LPBYTE pNewSectBuf, DWORD newSectSize); //æ·»åŠ åŒºæ®µï¼Œè¿”å›æ–°å¢åŒºæ®µå­—èŠ‚æ•°
+	DWORD removeSectionDatas(int removeNum, int removeIdx[]); // ç§»é™¤åŒºæ®µ, removeIdxå¿…é¡»é¡ºåºï¼Œè¿”å›removeåçš„åŒºæ®µæ•°
+	DWORD savePeFile(const char* path, bool bShrinkPe=true); //ä¿å­˜ç¼“å†²åŒºpeæ–‡ä»¶
 };
 #endif

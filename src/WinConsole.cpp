@@ -1,16 +1,16 @@
+﻿#include <iostream>
+#include <fstream>
 #include "SimpleDpack.hpp"
 #include "debugtry.h"
-#include <iostream>
-#include <fstream>
 using namespace std;
 #ifndef _DEBUGTRY
 /*
-	SimpleDpack console ver0.4 Console
+	SimpleDpack console ver0.5.2 Console
 	simpledpack inpath [outpath]
 */
 int main(int argc,char *argv[])
 {
-	cout<<"-----------------SimpleDpack ver0.5--------------------"<<endl;
+	cout<<"-----------------SimpleDpack ver0.5.2--------------------"<<endl;
 #ifdef _WIN64
 	cout << "A very simple windows EXE(64bit) packing tool, " << endl;
 	cout << "for learning or investigating PE64 structure. " << endl;
@@ -56,7 +56,7 @@ int main(int argc,char *argv[])
 		else
 		{
 			strcpy(outpath,argv[1]);
-			int pos=strlen(outpath)-4;
+			size_t pos=strlen(outpath)-4;
 			if(strcmp(outpath+pos,".exe"))
 			{
 				cout<<"#error:pe save error!"<<endl;

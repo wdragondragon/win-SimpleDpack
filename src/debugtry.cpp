@@ -1,4 +1,4 @@
-#include "debugtry.h"
+ï»¿#include "debugtry.h"
 #include "PeInfo.hpp"
 #include "SimpleDpack.hpp"
 #include "capstone-3.0.4-win32\capstone.h"
@@ -36,7 +36,7 @@ int dbg_cvirtfunc()
 	b->print();
 	return 0;
 }
-int dbg_opcode2asm(void)//²âÊÔµ÷ÓÃcapstone¿â
+int dbg_opcode2asm(void)//æµ‹è¯•è°ƒç”¨capstoneåº“
  {
   char *CODE="\x55\x48\x8b\x05\xb8\x13\x00\x00";
   csh handle;
@@ -60,9 +60,9 @@ int dbg_opcode2asm(void)//²âÊÔµ÷ÓÃcapstone¿â
  
      return 0;
  }
-int dbg_lzma()//²âÊÔlzmaËã·¨
+int dbg_lzma()//æµ‹è¯•lzmaç®—æ³•
 {
-	char *words="¤³¤³¤Ï£¬LZMA¤Î¤¿¤À¤·¤«¤É¤¦¤«£¡";
+	char *words="ã“ã“ã¯ï¼ŒLZMAã®ãŸã ã—ã‹ã©ã†ã‹ï¼";
 	//char *words="1234";
 	char word_compressed[100];
 	char word_decompressed[100];
@@ -86,7 +86,7 @@ int dbg_lzma()//²âÊÔlzmaËã·¨
 }
 int dbg_dlzma()
 {	
-	char *words="¤³¤³¤Ï£¬LZMA¤Î¤¿¤À¤·¤«¤É¤¦¤«£¡";
+	char *words="ã“ã“ã¯ï¼ŒLZMAã®ãŸã ã—ã‹ã©ã†ã‹ï¼";
 	//char *words="1234533334444";
 	char buf[0x100],buf2[0x100];
 	printf("%d\n",strlen(words)+1);
@@ -107,7 +107,7 @@ int dbg_dlzma()
 	//printf("%s \n",buf2);
 	return 0;
 }
-int dbg_lzmauncompress()//lzmauncompress.lib¿â²âÊÔ
+int dbg_lzmauncompress()//lzmauncompress.libåº“æµ‹è¯•
 {
 	char word_compressed[100]="\x00\x18\x8c\x82\xb6\xc1\x0c\x2f\xcb\x00\xcc";
 	char word_decompressed[100];
