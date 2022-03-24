@@ -57,10 +57,11 @@ dpackType.c     // structures decleare
 * v0.5 x64 supprot!
 * v0.5.1 fixed IAT FT pointer to OFT problem
 * v0.5.2 fix reloc problem, compatible with windows XP, change code to utf8bom
+* v0.5.3  fix the problem by `GetProcAddress ` when using ordinal
 
 ## coming soon(maybe...):
 
 * ~~pack multi sections (done)~~
 * ~~win64 pe (done)~~
-* improve the compatibility ? (I don't know why some of the x64 exe can not start after changing OEP...) 
+* ~~improve the compatibility ? (I don't know why some of the x64 exe can not start after changing OEP...)~~fixed in v0.5.3
 * ...

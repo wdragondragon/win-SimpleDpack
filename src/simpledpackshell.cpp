@@ -175,28 +175,34 @@ void LoadOrigionIat(PVOID arg)  // 因为将iat改为了壳的，所以要还原
 			PAGE_EXECUTE_READWRITE,&oldProtect);//注意指针位置
 		for(j=0;j<item_num;j++)
 		{
-			if((poThunk[j].u1.Ordinal >>31) != 0x1) //不是用序号
-			{
-				pFuncName=(PIMAGE_IMPORT_BY_NAME)(imagebase+poThunk[j].u1.AddressOfData);
-				tName=(LPBYTE)pFuncName->Name;
 #ifdef _WIN64
-				tVa = (ULONGLONG)GetProcAddress(tHomule, (LPCSTR)tName);
-#else
-				tVa = (DWORD)GetProcAddress(tHomule, (LPCSTR)tName);
-#endif
+			if((poThunk[j].u1.Ordinal >> 63) != 0x1) //不是用序号
+			{
+				pFuncName=(PIMAGE_IMPORT_BY_NAME)(imagebase + poThunk[j].u1.AddressOfData);
+				tName = (LPBYTE)pFuncName->Name;
 			}
 			else
 			{
 				//如果此参数是一个序数值，它必须在一个字的低字节，高字节必须为0。
-#ifdef _WIN64			
-				tVa = (ULONGLONG)GetProcAddress(tHomule,(LPCSTR)(poThunk[j].u1.Ordinal & 0x0000ffff));
-#else
-				tVa = (DWORD)GetProcAddress(tHomule, (LPCSTR)(poThunk[j].u1.Ordinal & 0x0000ffff));
-#endif
+				tName = (LPBYTE)(poThunk[j].u1.Ordinal & 0x000000000000ffff);
 			}
+			tVa = (ULONGLONG)GetProcAddress(tHomule, (LPCSTR)tName);
+# else
+			if ((poThunk[j].u1.Ordinal >> 31) != 0x1) //不是用序号
+			{
+				pFuncName = (PIMAGE_IMPORT_BY_NAME)(imagebase + poThunk[j].u1.AddressOfData);
+				tName = (LPBYTE)pFuncName->Name;
+			}
+			else
+			{
+				//如果此参数是一个序数值，它必须在一个字的低字节，高字节必须为0。
+				tName = (LPBYTE)(poThunk[j].u1.Ordinal & 0x0000ffff);
+			}
+			tVa = (DWORD)GetProcAddress(tHomule, (LPCSTR)tName);
+# endif
 			if (tVa == NULL)
 			{
-				MessageBox(NULL, "IAT load error!", "error", NULL);
+				MessageBox(NULL, "IAT load error!", "error", 0);
 				ExitProcess(1);
 			}
 			pfThunk[j].u1.Function = tVa;//注意间接寻址

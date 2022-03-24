@@ -2,7 +2,7 @@
 	peinfo v0.5,
 	to inspect pe32/pe64 structure
 	designed by devseed,
-	https://github.com/YuriSizuku/SimpleDpack/
+	https://github.com/YuriSizuku/SimpleDpack
 */
 
 #include <Windows.h>
