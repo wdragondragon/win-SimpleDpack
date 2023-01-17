@@ -312,8 +312,8 @@ void CSimpleDpack::adjustPackpeHeaders(DWORD offset)
 		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress + packpeImageSize + offset,
 		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].Size };
 	m_packpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IAT] = {
-		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress + packpeImageSize + offset,
-		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IMPORT].Size};
+		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IAT].VirtualAddress + packpeImageSize + offset,
+		m_shellpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_IAT].Size};
 	m_packpe.getImageDataDirectory()[IMAGE_DIRECTORY_ENTRY_BASERELOC] = { 0,0 };
 
 	// pe 属性设置
