@@ -1,4 +1,6 @@
 ﻿#include "simpledpackshell.h"
+#include <iostream>
+#include <ctime>
 void dpackStart();
 extern "C" {
 	DPACK_API DPACK_SHELL_INDEX g_dpackShellIndex = { (PVOID)dpackStart,0 };//顺便初始化壳oep

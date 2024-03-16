@@ -24,6 +24,7 @@
     <ClInclude Include="..\src\PeEdit.hpp" />
     <ClInclude Include="..\src\PeInfo.hpp" />
     <ClInclude Include="..\src\SimpleDpack.hpp" />
+    <ClInclude Include="..\src\xor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\debugtry.cpp" />
@@ -33,12 +34,13 @@
     <ClCompile Include="..\src\PeInfo.cpp" />
     <ClCompile Include="..\src\SimpleDpack.cpp" />
     <ClCompile Include="..\src\WinConsole.cpp" />
+    <ClCompile Include="..\src\xor.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9A1927AC-D004-4280-99F5-2ADF20DC76BB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>SimpleDpack</RootNamespace>
-    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -51,7 +53,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141_xp</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>

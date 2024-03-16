@@ -30,6 +30,9 @@
     <ClInclude Include="..\src\dpackType.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\xor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\debugtry.cpp">
@@ -51,6 +54,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\src\dunpackProc.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\xor.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
